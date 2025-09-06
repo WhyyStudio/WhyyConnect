@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "542097022511",
+    "project_id": "whyyconnect",
+    "storage_bucket": "whyyconnect.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542097022511:android:438183482523f5be3b30da",
+        "android_client_info": {
+          "package_name": "com.example.whyy_connect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "542097022511-7rn7r5m3bspm9qcvrr7nfcdftu6pn4ke.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnSHjYfEPjaifqSpEEBfzAoeUwyeErp8o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "542097022511-7rn7r5m3bspm9qcvrr7nfcdftu6pn4ke.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "542097022511-ipjug6ttbf2ulod8itj1qol09h77uple.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.whyyConnect"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

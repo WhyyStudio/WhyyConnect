@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>542097022511-ipjug6ttbf2ulod8itj1qol09h77uple.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.542097022511-ipjug6ttbf2ulod8itj1qol09h77uple</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCZCgisQ35ZA3yP-FUjLUTMaMSX04VSYyA</string>
+	<key>GCM_SENDER_ID</key>
+	<string>542097022511</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.whyyConnect</string>
+	<key>PROJECT_ID</key>
+	<string>whyyconnect</string>
+	<key>STORAGE_BUCKET</key>
+	<string>whyyconnect.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:542097022511:ios:b9fa8fbb0ca77da13b30da</string>
+</dict>
+</plist>

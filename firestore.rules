@@ -37,16 +37,15 @@ service cloud.firestore {
     match /card_sharing/{pin} {
       // Allow authenticated users to create sharing sessions
       allow create: if request.auth != null 
-        && request.auth.uid == resource.data.sharedBy
-        && resource.data.keys().hasAll(['pin', 'cardData', 'sharedBy', 'createdAt', 'expiresAt', 'isActive']);
+        && request.auth.uid == request.resource.data.sharedBy
+        && request.resource.data.keys().hasAll(['pin', 'cardData', 'sharedBy', 'createdAt', 'expiresAt', 'isActive']);
       
       // Allow authenticated users to read sharing sessions (for receiving cards)
       allow read: if request.auth != null;
       
       // Allow the creator to update their sharing sessions (for tracking receipts)
       allow update: if request.auth != null 
-        && request.auth.uid == resource.data.sharedBy
-        && request.resource.data.keys().hasAll(['pin', 'cardData', 'sharedBy', 'createdAt', 'expiresAt', 'isActive']);
+        && request.auth.uid == resource.data.sharedBy;
       
       // Allow the creator to delete their sharing sessions
       allow delete: if request.auth != null && request.auth.uid == resource.data.sharedBy;
@@ -61,6 +60,14 @@ service cloud.firestore {
     // Analytics collection (for sharing statistics)
     match /analytics/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Collection group rules for received_cards
+    // This allows querying received_cards across all users (for card deletion)
+    // Allow access to received cards that belong to the authenticated user or were shared by them
+    match /{path=**}/received_cards/{cardId} {
+      allow read, write: if request.auth != null 
+        && resource.data.sharedBy == request.auth.uid;
     }
     
     // Default deny rule for any other collections

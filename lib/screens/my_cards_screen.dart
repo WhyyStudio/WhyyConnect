@@ -9,6 +9,7 @@ import '../services/nearby_share_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import 'nearby_share_screen.dart';
+import 'edit_card_bottom_sheet.dart';
 
 class MyCardsScreen extends StatefulWidget {
   const MyCardsScreen({super.key});
@@ -548,26 +549,26 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
                              letterSpacing: 0.5,
                            ),
                          ),
-                         Container(
+                             Container(
                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                           decoration: BoxDecoration(
-                             color: Colors.white.withValues(alpha: 0.2),
+                               decoration: BoxDecoration(
+                                 color: Colors.white.withValues(alpha: 0.2),
                              borderRadius: BorderRadius.circular(6),
-                           ),
-                           child: Text(
+                               ),
+                               child: Text(
                              cardColor.isNotEmpty
                                  ? cardColor[0].toUpperCase() + cardColor.substring(1).toLowerCase()
                                  : 'Gold',
-                             style: TextStyle(
-                               fontFamily: 'Montserrat',
-                               fontSize: 12,
+                                 style: TextStyle(
+                                   fontFamily: 'Montserrat',
+                                   fontSize: 12,
                                fontWeight: FontWeight.w600,
-                               color: Colors.white,
+                                   color: Colors.white,
                                letterSpacing: 0.5,
                              ),
                            ),
                          ),
-                       ],
+                      ],
                     ),
 
                     const Spacer(),
@@ -611,23 +612,23 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
                          
                          // Position/Title
                          if (data['position'] != null && data['position'].toString().isNotEmpty)
-                           Text(
+                                                            Text(
                              data['position'].toString(),
-                             style: TextStyle(
-                               fontFamily: 'Montserrat',
+                               style: TextStyle(
+                                 fontFamily: 'Montserrat',
                                fontSize: 16,
                                fontWeight: FontWeight.w500,
                                color: Colors.white.withValues(alpha: 0.9),
-                               letterSpacing: 0.5,
+                                 letterSpacing: 0.5,
+                               ),
                              ),
-                           ),
+                           ],
+                         ),
                        ],
                      ),
-                  ],
                 ),
               ),
             ),
-          ),
           // Bottom branding row
           Positioned(
             bottom: 24,
@@ -640,14 +641,14 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
               ),
               child: Text(
                 'Whyy Connect',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                   color: Colors.white.withValues(alpha: 0.9),
-                  letterSpacing: 0.5,
-                ),
-              ),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
             ),
           ),
         ],
@@ -753,22 +754,139 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
       builder: (context) => const AddCardBottomSheet(),
     );
   }
 
   void _editCard(DocumentSnapshot card) {
-    // TODO: Implement edit functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit functionality coming soon!'),
-        backgroundColor: Colors.blue,
-      ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => EditCardBottomSheet(card: card),
     );
   }
 
   void _deleteCard(String cardId) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.getBackground(context),
+        title: Text(
+          'Destroy Card',
+          style: AppTextStyles.title2.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to destroy this card?',
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.getTextPrimary(context),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.getError(context).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.getError(context).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.getError(context),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'This card will be deleted from only your wallet.',
+                      style: AppTextStyles.footnote.copyWith(
+                        color: AppColors.getError(context),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.headline.copyWith(
+                color: AppColors.getTextSecondary(context),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _performCardDeletion(cardId);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.getError(context),
+            ),
+            child: Text(
+              'DELETE',
+              style: AppTextStyles.headline.copyWith(
+                color: AppColors.getError(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performCardDeletion(String cardId) async {
     try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.getSurface(context),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.getError(context)),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Destroying card...',
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
       // Delete from Firestore
       await _firestore
           .collection('users')
@@ -777,23 +895,64 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
           .doc(cardId)
           .delete();
       
-      // Delete from nearby shared cards
+      // Delete from nearby shared cards (this will remove from other users' wallets)
       await NearbyShareService.deleteSharedCard(cardId);
+      
+      // Delete from local storage (try both physical and virtual)
+      try {
+        await CardStorageService.deleteCard(cardId, 'physical');
+      } catch (e) {
+        // Try virtual if physical fails
+        await CardStorageService.deleteCard(cardId, 'virtual');
+      }
+      
+      // Close loading dialog
+      Navigator.pop(context);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Card deleted successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Card destroyed successfully from all wallets'),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.getSuccess(context),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
+      // Close loading dialog if still open
+      Navigator.pop(context);
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting card: $e'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Error destroying card: $e'),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.getError(context),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
@@ -805,7 +964,11 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CardDetailsPopup(card: card),
+      builder: (context) => CardDetailsPopup(
+        card: card,
+        onEdit: () => _editCard(card),
+        onDelete: () => _deleteCard(card.id),
+      ),
     );
   }
 
@@ -975,16 +1138,23 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
-      decoration: BoxDecoration(
-        color: AppColors.getBackground(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          minHeight: MediaQuery.of(context).size.height * 0.5,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.getBackground(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
+          mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(context),
-          Expanded(
+            _buildHeader(context),
+            Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -992,19 +1162,21 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardTypeSelector(context),
+                      _buildCardTypeSelector(context),
                     const SizedBox(height: 24),
-                    _buildCardColorSelector(context),
+                      _buildCardColorSelector(context),
                     const SizedBox(height: 24),
-                    _buildCardFields(context),
+                      _buildCardFields(context),
                     const SizedBox(height: 32),
-                    _buildSaveButton(context),
+                      _buildSaveButton(context),
+                      const SizedBox(height: 24), // Extra padding for keyboard
                   ],
                 ),
               ),
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -1643,8 +1815,15 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
 
 class CardDetailsPopup extends StatefulWidget {
   final DocumentSnapshot card;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
   
-  const CardDetailsPopup({super.key, required this.card});
+  const CardDetailsPopup({
+    super.key, 
+    required this.card,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   State<CardDetailsPopup> createState() => _CardDetailsPopupState();
@@ -1841,24 +2020,24 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                               letterSpacing: 0.5,
                             ),
                           ),
-                          Container(
+                              Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               cardColor.isNotEmpty
                                   ? cardColor[0].toUpperCase() + cardColor.substring(1).toLowerCase()
                                   : 'Gold',
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 12,
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                    color: Colors.white,
                                 letterSpacing: 0.5,
-                              ),
-                            ),
+                                  ),
+                                ),
                           ),
                         ],
                       ),
@@ -1901,20 +2080,20 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                           
                           // Position/Title
                           if (data['position'] != null && data['position'].toString().isNotEmpty)
-                            Text(
+                              Text(
                               data['position'].toString(),
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white.withValues(alpha: 0.9),
-                                letterSpacing: 0.5,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            ),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
                 ),
                 // Bottom branding
                 Positioned(
@@ -2585,46 +2764,23 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                 ),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Close',
-                        style: AppTextStyles.headline.copyWith(
-                          color: AppColors.getTextSecondary(context),
-                        ),
-                      ),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _saveQRCode(qrData),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.getPrimary(context),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        'Save QR',
-                        style: AppTextStyles.headline.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
+                  child: Text(
+                    'Close',
+                    style: AppTextStyles.headline.copyWith(
+                      color: AppColors.getTextSecondary(context),
                     ),
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -2633,27 +2789,6 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
     );
   }
 
-  void _saveQRCode(String qrData) {
-    // TODO: Implement QR code saving to gallery
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('QR Code saved to gallery'),
-            ],
-          ),
-          backgroundColor: AppColors.getSuccess(context),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-    Navigator.pop(context);
-  }
 
   void _shareWithNFC() async {
     try {
@@ -2725,14 +2860,14 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
   }
 
   void _editCard() {
-    Navigator.pop(context);
-    // TODO: Implement edit functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Edit functionality coming soon!'),
-        backgroundColor: AppColors.getPrimary(context),
-      ),
-    );
+    Navigator.pop(context); // Close the card details popup
+    
+    // Call the edit callback function
+    if (widget.onEdit != null) {
+      widget.onEdit!();
+    } else {
+      print('Error: onEdit callback is null');
+    }
   }
 
   // Synchronize virtual cards when original card is updated
@@ -2786,57 +2921,14 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
   }
 
   void _deleteCard() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.getBackground(context),
-        title: Text(
-          'Delete Card',
-          style: AppTextStyles.title2.copyWith(
-            color: AppColors.getTextPrimary(context),
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to delete this card? This action cannot be undone.',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.getTextPrimary(context),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.headline.copyWith(
-                color: AppColors.getTextSecondary(context),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              // TODO: Implement delete functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Delete functionality coming soon!'),
-                  backgroundColor: AppColors.getError(context),
-                ),
-              );
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.getError(context),
-            ),
-            child: Text(
-              'Delete',
-              style: AppTextStyles.headline.copyWith(
-                color: AppColors.getError(context),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    Navigator.pop(context); // Close the card details popup
+    
+    // Call the delete callback function
+    if (widget.onDelete != null) {
+      widget.onDelete!();
+    } else {
+      print('Error: onDelete callback is null');
+    }
   }
 
   // Action Methods

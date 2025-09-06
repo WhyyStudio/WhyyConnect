@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'wallet_screen.dart';
 import 'my_cards_screen.dart';
 import 'profile_screen.dart';
-import 'sharing_stats_screen.dart';
+// import 'sharing_stats_screen.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../services/nearby_share_service.dart';
@@ -359,13 +359,13 @@ class _HomeContentState extends State<HomeContent>
     }
   }
 
-  void _navigateToStats() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const SharingStatsScreen(),
-      ),
-    );
-  }
+  // void _navigateToStats() {
+  //   Navigator.of(context).push(
+  //     MaterialPageRoute(
+  //       builder: (context) => const SharingStatsScreen(),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -615,13 +615,13 @@ class _HomeContentState extends State<HomeContent>
               () => widget.onTabChanged?.call(2), // Navigate to Cards tab
             ),
             const SizedBox(height: 12),
-            _buildActionTile(
-              Icons.analytics_outlined,
-              'Analytics',
-              'View your sharing statistics',
-              AppColors.secondary,
-              () => _navigateToStats(),
-            ),
+            // _buildActionTile(
+            //   Icons.analytics_outlined,
+            //   'Analytics',
+            //   'View your sharing statistics',
+            //   AppColors.secondary,
+            //   () => _navigateToStats(),
+            // ),
           ],
         ),
       ],

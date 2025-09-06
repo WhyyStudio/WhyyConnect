@@ -298,27 +298,37 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                         child: Column(
                           children: [
                             if (title.isNotEmpty) _buildInfoRow(Icons.work_outline, 'Title', title),
-                            if (email.isNotEmpty) _buildInfoRow(Icons.email_outlined, 'Email', email),
-                            if (phone.isNotEmpty) _buildInteractiveInfoRow(
+                            if (email.isNotEmpty) _buildEnhancedContactRow(
+                              Icons.email_outlined, 
+                              'Email', 
+                              email, 
+                              () => _sendEmail(email),
+                              'Send Email',
+                              const Color(0xFF007AFF),
+                            ),
+                            if (phone.isNotEmpty) _buildEnhancedContactRow(
                               Icons.phone_outlined, 
                               'Phone', 
                               phone, 
                               () => _makePhoneCall(phone),
-                              'Call',
+                              'Call Now',
+                              const Color(0xFF34C759),
                             ),
-                            if (website.isNotEmpty) _buildInteractiveInfoRow(
+                            if (website.isNotEmpty) _buildEnhancedContactRow(
                               Icons.language, 
                               'Website', 
                               website, 
                               () => _openWebsite(website),
-                              'Visit',
+                              'Visit Site',
+                              const Color(0xFFAF52DE),
                             ),
-                            if (address.isNotEmpty) _buildInteractiveInfoRow(
+                            if (address.isNotEmpty) _buildEnhancedContactRow(
                               Icons.location_on_outlined, 
                               'Address', 
                               address, 
                               () => _getDirections(address),
-                              'Directions',
+                              'Get Directions',
+                              const Color(0xFFFF9500),
                             ),
                             _buildInfoRow(Icons.calendar_today, 'Scanned', _formatDate(scannedDate)),
                             const SizedBox(height: 20), // Extra padding at bottom
@@ -440,74 +450,149 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
     );
   }
 
-  Widget _buildInteractiveInfoRow(IconData icon, String label, String value, VoidCallback onTap, String actionText) {
+  Widget _buildEnhancedContactRow(IconData icon, String label, String value, VoidCallback onTap, String actionText, Color accentColor) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppColors.getPrimary(context).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: AppColors.getPrimary(context),
-            ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getSurface(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.getBorder(context),
+            width: 0.5,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTextStyles.caption1.copyWith(
-                    color: AppColors.getTextSecondary(context),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.getTextPrimary(context),
-                  ),
-                ),
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
             onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.getPrimary(context),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.getPrimary(context).withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Icon with gradient background
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          accentColor.withValues(alpha: 0.1),
+                          accentColor.withValues(alpha: 0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 24,
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: AppTextStyles.caption1.copyWith(
+                            color: AppColors.getTextSecondary(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          value,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.getTextPrimary(context),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Action button
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          accentColor,
+                          accentColor.withValues(alpha: 0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _getActionIcon(icon),
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          actionText,
+                          style: AppTextStyles.caption1.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              child: Text(
-                actionText,
-                style: AppTextStyles.caption1.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ),
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  IconData _getActionIcon(IconData contactIcon) {
+    switch (contactIcon) {
+      case Icons.email_outlined:
+        return Icons.send;
+      case Icons.phone_outlined:
+        return Icons.call;
+      case Icons.language:
+        return Icons.open_in_new;
+      case Icons.location_on_outlined:
+        return Icons.directions;
+      default:
+        return Icons.touch_app;
+    }
   }
 
   String _formatDate(String dateString) {
@@ -516,6 +601,24 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
       return '${date.day}/${date.month}/${date.year}';
     } catch (e) {
       return 'Unknown date';
+    }
+  }
+
+  Future<void> _sendEmail(String emailAddress) async {
+    try {
+      final Uri emailUri = Uri(
+        scheme: 'mailto',
+        path: emailAddress,
+        query: 'subject=Hello from Whyy Connect&body=Hi there!',
+      );
+      
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+      } else {
+        _showErrorSnackBar('Could not launch email app');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error opening email: $e');
     }
   }
 

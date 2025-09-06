@@ -176,13 +176,20 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.check_circle, color: Colors.white),
             const SizedBox(width: 8),
-            Text(message),
+            Flexible(
+              child: Text(
+                message,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
+            ),
           ],
         ),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.getSuccess(context),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -196,13 +203,20 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error, color: Colors.white),
             const SizedBox(width: 8),
-            Text(message),
+            Flexible(
+              child: Text(
+                message,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
+            ),
           ],
         ),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.getError(context),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -215,23 +229,25 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.getTextPrimary(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           widget.isSharing ? 'Share Card' : 'Receive Card',
-          style: AppTextStyles.title2,
+          style: AppTextStyles.title2.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         actions: widget.isSharing && _generatedPIN != null
             ? [
                 IconButton(
                   onPressed: _cancelSharing,
-                  icon: const Icon(Icons.close, color: AppColors.error),
+                  icon: Icon(Icons.close, color: AppColors.getError(context)),
                 ),
               ]
             : null,
@@ -288,13 +304,13 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.primary,
-                AppColors.primaryLight,
+                AppColors.getPrimary(context),
+                AppColors.getPrimary(context).withValues(alpha: 0.8),
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: AppColors.getPrimary(context).withValues(alpha: 0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -309,14 +325,18 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
         const SizedBox(height: 20),
         Text(
           widget.isSharing ? 'Share Your Card' : 'Receive a Card',
-          style: AppTextStyles.largeTitle,
+          style: AppTextStyles.largeTitle.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           widget.isSharing 
               ? 'Generate a PIN to share your business card with others'
               : 'Enter the PIN provided by the person sharing their card',
-          style: AppTextStyles.bodySecondary,
+          style: AppTextStyles.bodySecondary.copyWith(
+            color: AppColors.getTextSecondary(context),
+          ),
         ),
       ],
     );
@@ -405,6 +425,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
                           width: 50,
@@ -452,6 +473,8 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
                         color: Colors.white,
                         letterSpacing: 1.0,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -461,6 +484,8 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.95),
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ],
                 ),
@@ -477,27 +502,31 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),
       child: Column(
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.getPrimary(context)),
           ),
           const SizedBox(height: 20),
           Text(
             'Generating PIN...',
-            style: AppTextStyles.headline,
+            style: AppTextStyles.headline.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Please wait while we create a secure sharing PIN',
-            style: AppTextStyles.bodySecondary,
+            style: AppTextStyles.bodySecondary.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -515,10 +544,10 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.getSurface(context),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.primary,
+                color: AppColors.getPrimary(context),
                 width: 2,
               ),
             ),
@@ -527,7 +556,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
                 Text(
                   'Sharing PIN',
                   style: AppTextStyles.footnote.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -536,7 +565,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+                    color: AppColors.getPrimary(context),
                     letterSpacing: 8,
                   ),
                 ),
@@ -547,8 +576,8 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
                       child: CustomButton(
                         text: 'Copy PIN',
                         onPressed: _copyPIN,
-                        backgroundColor: AppColors.primary,
-                        textColor: AppColors.textPrimary,
+                        backgroundColor: AppColors.getPrimary(context),
+                        textColor: Colors.white,
                         prefixIcon: Icons.copy,
                       ),
                     ),
@@ -557,7 +586,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
                       child: CustomButton(
                         text: 'Cancel',
                         onPressed: _cancelSharing,
-                        backgroundColor: AppColors.error,
+                        backgroundColor: AppColors.getError(context),
                         textColor: Colors.white,
                         prefixIcon: Icons.close,
                       ),
@@ -576,8 +605,8 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
     return CustomButton(
       text: 'Generate Sharing PIN',
       onPressed: _generateSharingPIN,
-      backgroundColor: AppColors.primary,
-      textColor: AppColors.textPrimary,
+      backgroundColor: AppColors.getPrimary(context),
+      textColor: Colors.white,
       prefixIcon: Icons.share,
     );
   }
@@ -590,7 +619,9 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
         children: [
           Text(
             'Enter Sharing PIN',
-            style: AppTextStyles.title3,
+            style: AppTextStyles.title3.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -600,7 +631,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimary(context),
               letterSpacing: 4,
             ),
             textAlign: TextAlign.center,
@@ -608,11 +639,11 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
               hintText: '000000',
               hintStyle: TextStyle(
                 fontSize: 24,
-                color: AppColors.textTertiary,
+                color: AppColors.getTextTertiary(context),
                 letterSpacing: 4,
               ),
               filled: true,
-              fillColor: AppColors.surface,
+              fillColor: AppColors.getSurface(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -623,11 +654,11 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                borderSide: BorderSide(color: AppColors.getPrimary(context), width: 2),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.error, width: 2),
+                borderSide: BorderSide(color: AppColors.getError(context), width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               counterText: '',
@@ -650,7 +681,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
             text: _isReceiving ? 'Receiving...' : 'Receive Card',
             onPressed: _isReceiving ? null : _receiveCard,
             isLoading: _isReceiving,
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.getSuccess(context),
             textColor: Colors.white,
             prefixIcon: Icons.download,
           ),
@@ -663,10 +694,10 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: AppColors.getPrimary(context).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
+          color: AppColors.getPrimary(context).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -676,14 +707,14 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
             children: [
               Icon(
                 Icons.info_outline,
-                color: AppColors.primary,
+                color: AppColors.getPrimary(context),
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 'How to share:',
                 style: AppTextStyles.headline.copyWith(
-                  color: AppColors.primary,
+                  color: AppColors.getPrimary(context),
                 ),
               ),
             ],
@@ -702,10 +733,10 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.1),
+        color: AppColors.getSuccess(context).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.success.withValues(alpha: 0.2),
+          color: AppColors.getSuccess(context).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -715,14 +746,14 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
             children: [
               Icon(
                 Icons.info_outline,
-                color: AppColors.success,
+                color: AppColors.getSuccess(context),
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 'How to receive:',
                 style: AppTextStyles.headline.copyWith(
-                  color: AppColors.success,
+                  color: AppColors.getSuccess(context),
                 ),
               ),
             ],
@@ -747,7 +778,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
             width: 20,
             height: 20,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.getPrimary(context),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
@@ -766,7 +797,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
             child: Text(
               text,
               style: AppTextStyles.footnote.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
           ),

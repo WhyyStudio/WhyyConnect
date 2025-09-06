@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'card_scanner_screen.dart';
+import 'qr_scanner_screen.dart';
 import '../services/card_storage_service.dart';
 import '../widgets/card_details_popup.dart';
 import '../utils/app_colors.dart';
@@ -30,6 +31,8 @@ class _WalletScreenState extends State<WalletScreen>
   List<Map<String, dynamic>> _scannedCards = [];
   bool _isLoading = true;
   String _selectedCategory = 'All'; // 'All', 'Physical', 'Virtual'
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -89,14 +92,45 @@ class _WalletScreenState extends State<WalletScreen>
   }
 
   List<Map<String, dynamic>> get _filteredCards {
+    List<Map<String, dynamic>> filteredCards;
+    
+    // Filter by category first
     switch (_selectedCategory) {
       case 'Physical':
-        return _scannedCards.where((card) => card['cardType'] == 'physical').toList();
+        filteredCards = _scannedCards.where((card) => card['cardType'] == 'physical').toList();
+        break;
       case 'Virtual':
-        return _scannedCards.where((card) => card['cardType'] == 'virtual').toList();
+        filteredCards = _scannedCards.where((card) => card['cardType'] == 'virtual').toList();
+        break;
       default:
-        return _scannedCards;
+        filteredCards = _scannedCards;
     }
+    
+    // Then filter by search query
+    if (_searchQuery.isNotEmpty) {
+      filteredCards = filteredCards.where((card) {
+        final extractedData = card['extractedData'] ?? {};
+        final name = (extractedData['name'] ?? '').toLowerCase();
+        final company = (extractedData['company'] ?? '').toLowerCase();
+        final email = (extractedData['email'] ?? '').toLowerCase();
+        final phone = (extractedData['phone'] ?? '').toLowerCase();
+        final position = (extractedData['position'] ?? '').toLowerCase();
+        final website = (extractedData['website'] ?? '').toLowerCase();
+        final address = (extractedData['address'] ?? '').toLowerCase();
+        
+        final query = _searchQuery.toLowerCase();
+        
+        return name.contains(query) ||
+               company.contains(query) ||
+               email.contains(query) ||
+               phone.contains(query) ||
+               position.contains(query) ||
+               website.contains(query) ||
+               address.contains(query);
+      }).toList();
+    }
+    
+    return filteredCards;
   }
 
   // LinkedIn cards loading method - disabled
@@ -145,6 +179,7 @@ class _WalletScreenState extends State<WalletScreen>
     _headerController.dispose();
     _buttonsController.dispose();
     _cardsController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -190,6 +225,8 @@ class _WalletScreenState extends State<WalletScreen>
                   },
                 ),
                 const SizedBox(height: 32),
+                _buildSearchBar(context),
+                const SizedBox(height: 24),
                 _buildCategorySelector(context),
                 const SizedBox(height: 24),
                 _buildScannedCards(context),
@@ -302,6 +339,97 @@ class _WalletScreenState extends State<WalletScreen>
             },
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Search Cards',
+          style: AppTextStyles.title3.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.getSurface(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.getBorder(context),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Search by name, company, email, phone...',
+              hintStyle: AppTextStyles.body.copyWith(
+                color: AppColors.getTextSecondary(context),
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: AppColors.getTextSecondary(context),
+                size: 20,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                      icon: Icon(
+                        Icons.clear,
+                        color: AppColors.getTextSecondary(context),
+                        size: 20,
+                      ),
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
+        ),
+        if (_searchQuery.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '${_filteredCards.length} card${_filteredCards.length == 1 ? '' : 's'} found',
+              style: AppTextStyles.footnote.copyWith(
+                color: AppColors.getPrimary(context),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -874,57 +1002,6 @@ class _WalletScreenState extends State<WalletScreen>
                 color: AppColors.getTextPrimary(context),
               ),
             ),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF007AFF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '$physicalCount',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF34C759),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '$virtualCount',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.getPrimary(context),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${filteredCards.length}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
         const SizedBox(height: 20),
@@ -1477,24 +1554,32 @@ class _WalletScreenState extends State<WalletScreen>
     IconData icon;
     Color iconColor;
     
-    switch (_selectedCategory) {
-      case 'Physical':
-        title = 'No Physical Cards';
-        subtitle = 'Scan physical business cards to store them here';
-        icon = Icons.camera_alt_outlined;
-        iconColor = const Color(0xFF007AFF);
-        break;
-      case 'Virtual':
-        title = 'No Virtual Cards';
-        subtitle = 'Scan QR codes or receive cards via nearby sharing to store them here';
-        icon = Icons.qr_code_outlined;
-        iconColor = const Color(0xFF34C759);
-        break;
-      default:
-        title = 'No Cards Yet';
-        subtitle = 'Scan physical cards or add virtual cards via QR codes to store them here';
-        icon = Icons.inbox_outlined;
-        iconColor = AppColors.getPrimary(context);
+    // Check if it's a search result
+    if (_searchQuery.isNotEmpty) {
+      title = 'No Cards Found';
+      subtitle = 'Try searching with different keywords or check your spelling';
+      icon = Icons.search_off;
+      iconColor = AppColors.getTextSecondary(context);
+    } else {
+      switch (_selectedCategory) {
+        case 'Physical':
+          title = 'No Physical Cards';
+          subtitle = 'Scan physical business cards to store them here';
+          icon = Icons.camera_alt_outlined;
+          iconColor = const Color(0xFF007AFF);
+          break;
+        case 'Virtual':
+          title = 'No Virtual Cards';
+          subtitle = 'Scan QR codes or receive cards via nearby sharing to store them here';
+          icon = Icons.qr_code_outlined;
+          iconColor = const Color(0xFF34C759);
+          break;
+        default:
+          title = 'No Cards Yet';
+          subtitle = 'Scan physical cards or add virtual cards via QR codes to store them here';
+          icon = Icons.inbox_outlined;
+          iconColor = AppColors.getPrimary(context);
+      }
     }
     
     return Container(
@@ -1539,19 +1624,42 @@ class _WalletScreenState extends State<WalletScreen>
             ),
           ),
           const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.getPrimary(context),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Start scanning cards now',
-              style: AppTextStyles.headline.copyWith(
-                color: Colors.white,
+          if (_searchQuery.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.getPrimary(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: GestureDetector(
+                onTap: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+                child: Text(
+                  'Clear Search',
+                  style: AppTextStyles.headline.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.getPrimary(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Start scanning cards now',
+                style: AppTextStyles.headline.copyWith(
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

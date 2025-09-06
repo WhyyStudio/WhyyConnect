@@ -235,17 +235,28 @@ class NearbyShareService {
         });
       }
 
-      // Mark received cards as deleted (don't actually delete them)
-      final usersQuery = await _firestore
-          .collectionGroup(_receivedCardsCollection)
-          .where('originalCardId', isEqualTo: originalCardId)
-          .get();
+      // Try to mark received cards as deleted (this may fail due to permissions)
+      try {
+        final usersQuery = await _firestore
+            .collectionGroup(_receivedCardsCollection)
+            .where('originalCardId', isEqualTo: originalCardId)
+            .get();
 
-      for (final doc in usersQuery.docs) {
-        await doc.reference.update({
-          'isDeleted': true,
-          'deletedAt': FieldValue.serverTimestamp(),
-        });
+        for (final doc in usersQuery.docs) {
+          try {
+            await doc.reference.update({
+              'isDeleted': true,
+              'deletedAt': FieldValue.serverTimestamp(),
+            });
+          } catch (e) {
+            // Individual document update failed, continue with others
+            print('Failed to update received card ${doc.id}: $e');
+          }
+        }
+      } catch (e) {
+        // Collection group query failed, but that's okay
+        // The main deletion (sharing documents) succeeded
+        print('Failed to update received cards: $e');
       }
     } catch (e) {
       throw Exception('Failed to delete shared card: $e');

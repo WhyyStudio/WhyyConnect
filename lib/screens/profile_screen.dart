@@ -7,7 +7,7 @@ import '../services/auth_service.dart';
 import '../widgets/custom_button.dart';
 import '../screens/login_screen.dart';
 import 'edit_profile_screen.dart';
-import 'sharing_stats_screen.dart';
+// import 'sharing_stats_screen.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 
@@ -33,6 +33,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   Map<String, dynamic>? _userData;
+  int _cardCount = 0;
+  int _viewCount = 0;
+  int _shareCount = 0;
 
   @override
   void initState() {
@@ -83,6 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     ));
 
     _loadUserData();
+    _loadUserStats();
     _startAnimations();
   }
 
@@ -91,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       try {
         final doc = await _firestore
             .collection('users')
-            .doc(_currentUser!.uid)
+            .doc(_currentUser.uid)
             .get();
         
         if (doc.exists) {
@@ -101,6 +105,47 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
       } catch (e) {
         // Handle error silently
+      }
+    }
+  }
+
+  Future<void> _loadUserStats() async {
+    if (_currentUser != null) {
+      try {
+        // Load card count
+        final cardsSnapshot = await _firestore
+            .collection('users')
+            .doc(_currentUser.uid)
+            .collection('cards')
+            .get();
+        
+        // Load sharing stats
+        final sharingSnapshot = await _firestore
+            .collection('card_sharing')
+            .where('sharedBy', isEqualTo: _currentUser.uid)
+            .get();
+        
+        // Load analytics data
+        final analyticsSnapshot = await _firestore
+            .collection('analytics')
+            .doc(_currentUser.uid)
+            .get();
+        
+        setState(() {
+          _cardCount = cardsSnapshot.docs.length;
+          _shareCount = sharingSnapshot.docs.length;
+          
+          // Get view count from analytics
+          if (analyticsSnapshot.exists) {
+            final analyticsData = analyticsSnapshot.data();
+            _viewCount = analyticsData?['totalViews'] ?? 0;
+          } else {
+            _viewCount = 0;
+          }
+        });
+      } catch (e) {
+        // Handle error silently, keep default values
+        print('Error loading user stats: $e');
       }
     }
   }
@@ -174,6 +219,16 @@ class _ProfileScreenState extends State<ProfileScreen>
       return _userData!['phone'];
     }
     return 'Phone not set';
+  }
+
+  String _formatNumber(int number) {
+    if (number >= 1000000) {
+      return '${(number / 1000000).toStringAsFixed(1)}M';
+    } else if (number >= 1000) {
+      return '${(number / 1000).toStringAsFixed(1)}K';
+    } else {
+      return number.toString();
+    }
   }
 
   @override
@@ -363,7 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Row(
             children: [
               Expanded(
-                child: _buildProfileStat(context, 'Cards', '12', Icons.credit_card),
+                child: _buildProfileStat(context, 'Cards', _formatNumber(_cardCount), Icons.credit_card),
               ),
               Container(
                 width: 1,
@@ -371,7 +426,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 color: AppColors.getBorder(context),
               ),
               Expanded(
-                child: _buildProfileStat(context, 'Views', '1.2K', Icons.visibility),
+                child: _buildProfileStat(context, 'Views', _formatNumber(_viewCount), Icons.visibility),
               ),
               Container(
                 width: 1,
@@ -379,7 +434,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 color: AppColors.getBorder(context),
               ),
               Expanded(
-                child: _buildProfileStat(context, 'Shares', '89', Icons.share),
+                child: _buildProfileStat(context, 'Shares', _formatNumber(_shareCount), Icons.share),
               ),
             ],
           ),
@@ -469,20 +524,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                   );
                 },
               ),
-              _buildMenuItem(
-                context,
-                Icons.analytics,
-                'Sharing Stats',
-                'View your card sharing activity',
-                const Color(0xFF34C759),
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const SharingStatsScreen(),
-                    ),
-                  );
-                },
-              ),
+              // _buildMenuItem(
+              //   context,
+              //   Icons.analytics,
+              //   'Sharing Stats',
+              //   'View your card sharing activity',
+              //   const Color(0xFF34C759),
+              //   () {
+              //     Navigator.of(context).push(
+              //       MaterialPageRoute(
+              //         builder: (context) => const SharingStatsScreen(),
+              //       ),
+              //     );
+              //   },
+              // ),
               _buildMenuItem(
                 context,
                 Icons.favorite,
@@ -628,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Future<void> _openDonateLink() async {
     try {
-      final Uri donateUri = Uri.parse('https://buymeacoffee.com/whyystudio');
+      final Uri donateUri = Uri.parse('https://www.gofundme.com/f/donate-to-help-keep-all-the-apps-free-to-use-for-everyone/cl/o?utm_campaign=man_sharesheet_task&utm_content=amp13_t1&utm_medium=customer&utm_source=copy_link&lang=en_US&attribution_id=sl%3Afcdefd90-b68b-4f9d-88d9-3454f460f0f7&ts=1757185974');
       
       // Try different launch modes
       if (await canLaunchUrl(donateUri)) {
@@ -660,7 +715,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Could not open donation link. Please try again or visit: buymeacoffee.com/whyystudio'),
+                  child: Text('Could not open donation link. Please try again or visit: gofundme.com'),
                 ),
               ],
             ),

@@ -534,96 +534,54 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                                         // Top Row with NFC + Whyy Card + Menu
+                                         // Top Row with Card Type and Color
                      Row(
                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                        children: [
-                         Row(
-                           children: [
-                             Container(
-                               width: 50,
-                               height: 50,
-                               decoration: BoxDecoration(
-                                 color: Colors.white.withValues(alpha: 0.15),
-                                 borderRadius: BorderRadius.circular(15),
-                                 boxShadow: [
-                                   BoxShadow(
-                                     color: Colors.black.withValues(alpha: 0.1),
-                                     offset: const Offset(0, 2),
-                                     blurRadius: 4,
-                                   ),
-                                 ],
-                               ),
-                               child: Icon(
-                                 Icons.nfc,
-                                 color: Colors.white,
-                                 size: 24,
-                               ),
-                             ),
-                             const SizedBox(width: 16),
-                             Container(
-                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                               decoration: BoxDecoration(
-                                 color: Colors.white.withValues(alpha: 0.2),
-                                 borderRadius: BorderRadius.circular(8),
-                                 boxShadow: [
-                                   BoxShadow(
-                                     color: Colors.black.withValues(alpha: 0.1),
-                                     offset: const Offset(0, 1),
-                                     blurRadius: 2,
-                                   ),
-                                 ],
-                               ),
-                               child: Text(
-                                 'WHYY CONNECT',
-                                 style: TextStyle(
-                                   fontFamily: 'Montserrat',
-                                   fontSize: 12,
-                                   fontWeight: FontWeight.w800,
-                                   color: Colors.white,
-                                   letterSpacing: 1.5,
-                                   shadows: [
-                                     Shadow(
-                                       offset: const Offset(0, 1),
-                                       blurRadius: 1,
-                                       color: Colors.black.withValues(alpha: 0.2),
-                                     ),
-                                   ],
-                                 ),
-                               ),
-                             ),
-                           ],
+                         Text(
+                           'Whhy Card - $cardType',
+                           style: TextStyle(
+                             fontFamily: 'Montserrat',
+                             fontSize: 14,
+                             fontWeight: FontWeight.w600,
+                             color: Colors.white.withValues(alpha: 0.9),
+                             letterSpacing: 0.5,
+                           ),
                          ),
-                      ],
+                         Container(
+                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                           decoration: BoxDecoration(
+                             color: Colors.white.withValues(alpha: 0.2),
+                             borderRadius: BorderRadius.circular(6),
+                           ),
+                           child: Text(
+                             cardColor.isNotEmpty
+                                 ? cardColor[0].toUpperCase() + cardColor.substring(1).toLowerCase()
+                                 : 'Gold',
+                             style: TextStyle(
+                               fontFamily: 'Montserrat',
+                               fontSize: 12,
+                               fontWeight: FontWeight.w600,
+                               color: Colors.white,
+                               letterSpacing: 0.5,
+                             ),
+                           ),
+                         ),
+                       ],
                     ),
 
                     const Spacer(),
 
-                    // Card Details with Company, Name, Email, and Type
+                    // Card Details with Name, Company, and Position
                      Column(
                        crossAxisAlignment: CrossAxisAlignment.start,
                        children: [
-                         // Company Name
-                         if (cardType.toLowerCase() == 'email' && data['companyName'] != null)
-                           Text(
-                             data['companyName'].toString(),
-                             style: TextStyle(
-                               fontFamily: 'Montserrat',
-                               fontSize: 18,
-                               fontWeight: FontWeight.w700,
-                               color: Colors.white.withValues(alpha: 0.9),
-                               letterSpacing: 0.5,
-                             ),
-                           ),
-                         if (cardType.toLowerCase() == 'email' && data['companyName'] != null)
-                           const SizedBox(height: 8),
-                         
-                         // Person's Name
+                         // Person's Name (Main focus)
                          Text(
                            cardName,
                            style: TextStyle(
                              fontFamily: 'Playfair Display',
-                             fontSize: 26,
+                             fontSize: 28,
                              fontWeight: FontWeight.w800,
                              color: Colors.white,
                              letterSpacing: 1.0,
@@ -638,12 +596,12 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
                          ),
                          const SizedBox(height: 8),
                          
-                         // Position/Title
+                         // Company Name
                          Text(
                            cardTitle,
                            style: TextStyle(
                              fontFamily: 'Montserrat',
-                             fontSize: 16,
+                             fontSize: 18,
                              fontWeight: FontWeight.w600,
                              color: Colors.white.withValues(alpha: 0.95),
                              letterSpacing: 0.5,
@@ -651,28 +609,18 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
                          ),
                          const SizedBox(height: 4),
                          
-                         
-                         // Card Type with Whyy Card branding
-                         Row(
-                           children: [
-                             Icon(
-                               Icons.nfc,
-                               color: Colors.white.withValues(alpha: 0.8),
-                               size: 16,
+                         // Position/Title
+                         if (data['position'] != null && data['position'].toString().isNotEmpty)
+                           Text(
+                             data['position'].toString(),
+                             style: TextStyle(
+                               fontFamily: 'Montserrat',
+                               fontSize: 16,
+                               fontWeight: FontWeight.w500,
+                               color: Colors.white.withValues(alpha: 0.9),
+                               letterSpacing: 0.5,
                              ),
-                             const SizedBox(width: 6),
-                                                            Text(
-                                 'Whyy Card - $cardType',
-                               style: TextStyle(
-                                 fontFamily: 'Montserrat',
-                                 fontSize: 12,
-                                 fontWeight: FontWeight.w600,
-                                 color: Colors.white.withValues(alpha: 0.8),
-                                 letterSpacing: 0.5,
-                               ),
-                             ),
-                           ],
-                         ),
+                           ),
                        ],
                      ),
                   ],
@@ -680,60 +628,26 @@ Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
               ),
             ),
           ),
-          // Bottom details row
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                                         Row(
-                      //  children: [
-                      //    Icon(
-                      //      Icons.credit_card,
-                      //      color: Colors.white.withValues(alpha: 0.8),
-                      //      size: 16,
-                      //    ),
-                      //    const SizedBox(width: 6),
-                      //    Text(
-                      //      'Whyy Card',
-                      //      style: TextStyle(
-                      //        fontFamily: 'Montserrat',
-                      //        fontSize: 11,
-                      //        fontWeight: FontWeight.w600,
-                      //        color: Colors.white.withValues(alpha: 0.8),
-                      //        letterSpacing: 0.5,
-                      //      ),
-                      //    ),
-                      //  ],
-                     ),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.palette,
-                          color: Colors.white.withValues(alpha: 0.8),
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          cardColor.isNotEmpty
-                              ? cardColor[0].toUpperCase() + cardColor.substring(1).toLowerCase()
-                              : 'Gold',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.8),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+          // Bottom branding row
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'Whyy Connect',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  letterSpacing: 0.5,
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -1917,40 +1831,34 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: const Icon(
-                                  Icons.nfc,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
+                          Text(
+                            'Whhy Card - $cardType',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.9),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              cardColor.isNotEmpty
+                                  ? cardColor[0].toUpperCase() + cardColor.substring(1).toLowerCase()
+                                  : 'Gold',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
                               ),
-                              const SizedBox(width: 16),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'WHYY CONNECT',
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
@@ -1958,24 +1866,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (cardType.toLowerCase() == 'email' && data['companyName'] != null) ...[
-                            Text(
-                              data['companyName'].toString(),
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
+                          // Person's Name (Main focus)
                           Text(
                             cardName,
                             style: TextStyle(
                               fontFamily: 'Playfair Display',
-                              fontSize: 26,
+                              fontSize: 28,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 1.0,
@@ -1989,40 +1885,57 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                             ),
                           ),
                           const SizedBox(height: 8),
+                          
+                          // Company Name
                           Text(
                             cardTitle,
                             style: TextStyle(
                               fontFamily: 'Montserrat',
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w600,
                               color: Colors.white.withValues(alpha: 0.95),
                               letterSpacing: 0.5,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.nfc,
-                                color: Colors.white.withValues(alpha: 0.8),
-                                size: 16,
+                          
+                          // Position/Title
+                          if (data['position'] != null && data['position'].toString().isNotEmpty)
+                            Text(
+                              data['position'].toString(),
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withValues(alpha: 0.9),
+                                letterSpacing: 0.5,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Whyy Card - $cardType',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
                         ],
                       ),
                     ],
+                  ),
+                ),
+                // Bottom branding
+                Positioned(
+                  bottom: 24,
+                  right: 24,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Whyy Connect',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
               ],

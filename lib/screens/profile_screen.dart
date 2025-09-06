@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -496,7 +497,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 'Help & Support',
                 'Get help and contact support',
                 const Color(0xFFAF52DE),
-                () {},
+                () => _showHelpDialog(context),
               ),
               _buildMenuItem(
                 context,
@@ -504,7 +505,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 'About',
                 'App version and information',
                 const Color(0xFF8E8E93),
-                () {},
+                () => _showAboutDialog(context),
               ),
             ],
           ),
@@ -628,15 +629,25 @@ class _ProfileScreenState extends State<ProfileScreen>
   Future<void> _openDonateLink() async {
     try {
       final Uri donateUri = Uri.parse('https://buymeacoffee.com/whyystudio');
+      
+      // Try different launch modes
       if (await canLaunchUrl(donateUri)) {
-        await launchUrl(donateUri, mode: LaunchMode.externalApplication);
+        await launchUrl(
+          donateUri, 
+          mode: LaunchMode.externalApplication,
+        );
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Could not open donation link'),
-              backgroundColor: Colors.red,
-            ),
+        // Fallback: try with platformDefault mode
+        try {
+          await launchUrl(
+            donateUri, 
+            mode: LaunchMode.platformDefault,
+          );
+        } catch (e) {
+          // Final fallback: try with externalApplication mode
+          await launchUrl(
+            donateUri, 
+            mode: LaunchMode.externalApplication,
           );
         }
       }
@@ -644,11 +655,491 @@ class _ProfileScreenState extends State<ProfileScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error opening donation link: $e'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Could not open donation link. Please try again or visit: buymeacoffee.com/whyystudio'),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.getError(context),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
           ),
         );
       }
     }
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.getSurface(context),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header (Fixed)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Column(
+                    children: [
+                      // App Icon/Logo
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFFCC61D),
+                              Color(0xFFFFB200),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFCC61D).withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.credit_card,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // App Name
+                      Text(
+                        'Whyy Connect',
+                        style: AppTextStyles.title2.copyWith(
+                          color: AppColors.getTextPrimary(context),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // App Description
+                      Text(
+                        'Digital Business Card Platform',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.getTextSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Scrollable Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Column(
+                      children: [
+                
+                // Version Info
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Version 1.0.0',
+                    style: AppTextStyles.footnote.copyWith(
+                      color: AppColors.getPrimary(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Company Info
+                _buildAboutInfoRow(
+                  context,
+                  Icons.business,
+                  'Whyy Studio',
+                  'Development Team',
+                ),
+                const SizedBox(height: 12),
+                
+                // Help Email
+                _buildAboutInfoRow(
+                  context,
+                  Icons.email,
+                  'helpwhyyconnect@whyystudio.com',
+                  'Support Email',
+                ),
+                const SizedBox(height: 12),
+                
+                // Website
+                _buildAboutInfoRow(
+                  context,
+                  Icons.language,
+                  'whyystudio.com',
+                  'Website',
+                ),
+                const SizedBox(height: 20),
+                
+                // Features List
+                Text(
+                  'Features',
+                  style: AppTextStyles.headline.copyWith(
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                        _buildFeatureItem(context, 'Digital Business Cards'),
+                        _buildFeatureItem(context, 'QR Code Sharing'),
+                        _buildFeatureItem(context, 'Nearby Sharing'),
+                        _buildFeatureItem(context, 'Real-time Synchronization'),
+                        _buildFeatureItem(context, 'Dark Mode Support'),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Footer (Fixed)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: CustomButton(
+                      text: 'Close',
+                      onPressed: () => Navigator.of(context).pop(),
+                      backgroundColor: AppColors.getPrimary(context),
+                      textColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAboutInfoRow(BuildContext context, IconData icon, String text, String label) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: AppColors.getPrimary(context),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.getTextPrimary(context),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                label,
+                style: AppTextStyles.footnote.copyWith(
+                  color: AppColors.getTextSecondary(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureItem(BuildContext context, String feature) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle,
+            size: 16,
+            color: AppColors.getSuccess(context),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            feature,
+            style: AppTextStyles.footnote.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.getSurface(context),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header (Fixed)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Column(
+                    children: [
+                      // Help Icon
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFAF52DE),
+                              Color(0xFF8E44AD),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFAF52DE).withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.help_outline,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Title
+                      Text(
+                        'Help & Support',
+                        style: AppTextStyles.title2.copyWith(
+                          color: AppColors.getTextPrimary(context),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Subtitle
+                      Text(
+                        'We\'re here to help you!',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.getTextSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Scrollable Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Column(
+                      children: [
+                
+                // Contact Information
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.getPrimary(context).withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Contact Support',
+                        style: AppTextStyles.headline.copyWith(
+                          color: AppColors.getTextPrimary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      // Email Row
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.email,
+                            size: 20,
+                            color: AppColors.getPrimary(context),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'helpwhyyconnect@whyystudio.com',
+                                  style: AppTextStyles.body.copyWith(
+                                    color: AppColors.getTextPrimary(context),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  'Email Support',
+                                  style: AppTextStyles.footnote.copyWith(
+                                    color: AppColors.getTextSecondary(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => _copyToClipboard('helpwhyyconnect@whyystudio.com'),
+                            icon: Icon(
+                              Icons.copy,
+                              color: AppColors.getPrimary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // FAQ Section
+                Text(
+                  'Frequently Asked Questions',
+                  style: AppTextStyles.headline.copyWith(
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                        _buildFAQItem(context, 'How do I create a digital business card?', 'Go to the Cards tab and tap "Create New Card" to design your digital business card.'),
+                        _buildFAQItem(context, 'How do I share my card?', 'Use the nearby sharing feature with PIN codes or generate QR codes for easy sharing.'),
+                        _buildFAQItem(context, 'How do I scan someone else\'s card?', 'Go to the Wallet tab and use the QR scanner to scan and save other business cards.'),
+                        _buildFAQItem(context, 'Is my data secure?', 'Yes, all your data is encrypted and stored securely.'),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // Footer (Fixed)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: CustomButton(
+                      text: 'Close',
+                      onPressed: () => Navigator.of(context).pop(),
+                      backgroundColor: AppColors.getPrimary(context),
+                      textColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFAQItem(BuildContext context, String question, String answer) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.getBackground(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            question,
+            style: AppTextStyles.footnote.copyWith(
+              color: AppColors.getTextPrimary(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            answer,
+            style: AppTextStyles.footnote.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _copyToClipboard(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check, color: Colors.white),
+            const SizedBox(width: 8),
+            Text('Copied to clipboard: $text'),
+          ],
+        ),
+        backgroundColor: AppColors.getSuccess(context),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 }

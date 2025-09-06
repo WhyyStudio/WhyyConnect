@@ -29,6 +29,7 @@ class _WalletScreenState extends State<WalletScreen>
   
   List<Map<String, dynamic>> _scannedCards = [];
   bool _isLoading = true;
+  String _selectedCategory = 'All'; // 'All', 'Physical', 'Virtual'
 
   @override
   void initState() {
@@ -87,6 +88,17 @@ class _WalletScreenState extends State<WalletScreen>
     }
   }
 
+  List<Map<String, dynamic>> get _filteredCards {
+    switch (_selectedCategory) {
+      case 'Physical':
+        return _scannedCards.where((card) => card['cardType'] == 'physical').toList();
+      case 'Virtual':
+        return _scannedCards.where((card) => card['cardType'] == 'virtual').toList();
+      default:
+        return _scannedCards;
+    }
+  }
+
   // LinkedIn cards loading method - disabled
   /*
   Future<List<Map<String, dynamic>>> _loadLinkedInCards() async {
@@ -141,52 +153,54 @@ class _WalletScreenState extends State<WalletScreen>
     return Container(
       color: AppColors.getBackground(context),
       child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  AnimatedBuilder(
-                    animation: _headerAnimation,
-                    builder: (context, child) {
-                      final clampedValue = _headerAnimation.value.clamp(0.0, 1.0);
-                      return Transform.translate(
-                        offset: Offset(0, 30 * (1 - clampedValue)),
-                        child: Opacity(
-                          opacity: clampedValue,
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                AnimatedBuilder(
+                  animation: _headerAnimation,
+                  builder: (context, child) {
+                    final clampedValue = _headerAnimation.value.clamp(0.0, 1.0);
+                    return Transform.translate(
+                      offset: Offset(0, 30 * (1 - clampedValue)),
+                      child: Opacity(
+                        opacity: clampedValue,
                           child: _buildHeader(context),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  AnimatedBuilder(
-                    animation: _buttonsAnimation,
-                    builder: (context, child) {
-                      final clampedValue = _buttonsAnimation.value.clamp(0.0, 1.0);
-                      return Transform.translate(
-                        offset: Offset(0, 40 * (1 - clampedValue)),
-                        child: Opacity(
-                          opacity: clampedValue,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+                AnimatedBuilder(
+                  animation: _buttonsAnimation,
+                  builder: (context, child) {
+                    final clampedValue = _buttonsAnimation.value.clamp(0.0, 1.0);
+                    return Transform.translate(
+                      offset: Offset(0, 40 * (1 - clampedValue)),
+                      child: Opacity(
+                        opacity: clampedValue,
                           child: _buildActionButtons(context),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  _buildScannedCards(context),
-                  const SizedBox(height: 32),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+                _buildCategorySelector(context),
+                const SizedBox(height: 24),
+                _buildScannedCards(context),
+                const SizedBox(height: 32),
                   // _buildLinkedInCards(context), // LinkedIn cards section disabled
-                  const SizedBox(height: 40),
-                ],
-              ),
+                const SizedBox(height: 40),
+              ],
             ),
           ),
-        ],
+        ),
+      ],
       ),
     );
   }
@@ -289,6 +303,89 @@ class _WalletScreenState extends State<WalletScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCategorySelector(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Card Categories',
+          style: AppTextStyles.title3.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppColors.getSurface(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.getBorder(context),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildCategoryButton(
+                  context: context,
+                  label: 'All',
+                  isSelected: _selectedCategory == 'All',
+                  onTap: () => setState(() => _selectedCategory = 'All'),
+                ),
+              ),
+              Expanded(
+                child: _buildCategoryButton(
+                  context: context,
+                  label: 'Physical',
+                  isSelected: _selectedCategory == 'Physical',
+                  onTap: () => setState(() => _selectedCategory = 'Physical'),
+                ),
+              ),
+              Expanded(
+                child: _buildCategoryButton(
+                  context: context,
+                  label: 'Virtual',
+                  isSelected: _selectedCategory == 'Virtual',
+                  onTap: () => setState(() => _selectedCategory = 'Virtual'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryButton({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.getPrimary(context) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.headline.copyWith(
+            color: isSelected 
+                ? Colors.white 
+                : AppColors.getTextPrimary(context),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 
@@ -761,6 +858,10 @@ class _WalletScreenState extends State<WalletScreen>
   */
 
   Widget _buildScannedCards(BuildContext context) {
+    final filteredCards = _filteredCards;
+    final physicalCount = _scannedCards.where((card) => card['cardType'] == 'physical').length;
+    final virtualCount = _scannedCards.where((card) => card['cardType'] == 'virtual').length;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -768,7 +869,7 @@ class _WalletScreenState extends State<WalletScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'All Cards',
+              _selectedCategory == 'All' ? 'All Cards' : '$_selectedCategory Cards',
               style: AppTextStyles.title3.copyWith(
                 color: AppColors.getTextPrimary(context),
               ),
@@ -782,7 +883,7 @@ class _WalletScreenState extends State<WalletScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${_scannedCards.where((card) => card['cardType'] == 'physical').length}',
+                    '$physicalCount',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -798,7 +899,7 @@ class _WalletScreenState extends State<WalletScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${_scannedCards.where((card) => card['cardType'] == 'virtual').length}',
+                    '$virtualCount',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -810,11 +911,11 @@ class _WalletScreenState extends State<WalletScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.getPrimary(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${_scannedCards.length}',
+                    '${filteredCards.length}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -829,7 +930,7 @@ class _WalletScreenState extends State<WalletScreen>
         const SizedBox(height: 20),
         if (_isLoading)
           _buildLoadingState()
-        else if (_scannedCards.isEmpty)
+        else if (filteredCards.isEmpty)
           _buildEmptyState()
         else
           _buildScannedCardsList(),
@@ -865,15 +966,16 @@ class _WalletScreenState extends State<WalletScreen>
   }
 
   Widget _buildScannedCardsList() {
+    final filteredCards = _filteredCards;
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _scannedCards.length,
+      itemCount: filteredCards.length,
       itemBuilder: (context, index) {
-        final card = _scannedCards[index];
+        final card = filteredCards[index];
         return Padding(
           padding: EdgeInsets.only(
-            bottom: index < _scannedCards.length - 1 ? 16 : 20,
+            bottom: index < filteredCards.length - 1 ? 16 : 20,
           ),
           child: _buildScannedCardItem(card),
         );
@@ -941,186 +1043,136 @@ class _WalletScreenState extends State<WalletScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header with card type indicator
+                  // Top Row with Card Type and Color
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Text(
+                        'Whhy Card - ${isVirtual ? 'Virtual' : 'Physical'}',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                       Row(
                         children: [
                           Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Icon(
-                              isVirtual ? Icons.qr_code : Icons.camera_alt,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              isVirtual ? 'VIRTUAL CARD' : 'PHYSICAL CARD',
+                              cardColor.isNotEmpty
+                                  ? cardColor[0].toUpperCase() + cardColor.substring(1).toLowerCase()
+                                  : 'Gold',
                               style: TextStyle(
+                                fontFamily: 'Montserrat',
                                 fontSize: 12,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
-                                letterSpacing: 1.5,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                          const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () => _showDeleteConfirmation(card),
                         child: Container(
-                          padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(6),
                           ),
                           child: Icon(
                             Icons.delete_outline,
-                            size: 20,
+                                size: 16,
                             color: Colors.white,
                           ),
                         ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                   const Spacer(),
-                  // Card details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        if (position.isNotEmpty) ...[
-                          Text(
-                            position,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white.withValues(alpha: 0.95),
+                  // Card Details with Name, Company, and Position
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Person's Name (Main focus)
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontFamily: 'Playfair Display',
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                          shadows: [
+                            Shadow(
+                              offset: const Offset(2, 2),
+                              blurRadius: 4,
+                              color: Colors.black.withValues(alpha: 0.4),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                        ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Company Name
                         Text(
-                          company.isNotEmpty ? company : 'Unknown Company',
+                        company.isNotEmpty ? company : 'Unknown Company',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white.withValues(alpha: 0.9),
+                          fontFamily: 'Montserrat',
+                          fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.95),
+                          letterSpacing: 0.5,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Contact info
-                  if (email.isNotEmpty || phone.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        const SizedBox(height: 4),
+                      
+                      // Position/Title
+                      if (position.isNotEmpty)
+                      Text(
+                          position,
+                        style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.9),
+                            letterSpacing: 0.5,
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          if (email.isNotEmpty)
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.email_outlined,
-                                  size: 14,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    email,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                    ],
                                 ),
                               ],
                             ),
-                          if (email.isNotEmpty && phone.isNotEmpty) const SizedBox(height: 4),
-                          if (phone.isNotEmpty)
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.phone_outlined,
-                                  size: 14,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    phone,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                GestureDetector(
-                                  onTap: () => _makePhoneCall(phone),
+            ),
+            // Bottom branding
+            Positioned(
+              bottom: 24,
+              right: 24,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(4),
+                  color: Colors.white.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: const Text(
-                                      'Call',
+                child: Text(
+                  'Whyy Connect',
                                       style: TextStyle(
-                                        fontSize: 10,
+                    fontFamily: 'Montserrat',
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+                    color: Colors.white.withValues(alpha: 0.9),
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ),
           ],
@@ -1420,14 +1472,39 @@ class _WalletScreenState extends State<WalletScreen>
   }
 
   Widget _buildEmptyState() {
+    String title;
+    String subtitle;
+    IconData icon;
+    Color iconColor;
+    
+    switch (_selectedCategory) {
+      case 'Physical':
+        title = 'No Physical Cards';
+        subtitle = 'Scan physical business cards to store them here';
+        icon = Icons.camera_alt_outlined;
+        iconColor = const Color(0xFF007AFF);
+        break;
+      case 'Virtual':
+        title = 'No Virtual Cards';
+        subtitle = 'Scan QR codes or receive cards via nearby sharing to store them here';
+        icon = Icons.qr_code_outlined;
+        iconColor = const Color(0xFF34C759);
+        break;
+      default:
+        title = 'No Cards Yet';
+        subtitle = 'Scan physical cards or add virtual cards via QR codes to store them here';
+        icon = Icons.inbox_outlined;
+        iconColor = AppColors.getPrimary(context);
+    }
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),
@@ -1437,31 +1514,35 @@ class _WalletScreenState extends State<WalletScreen>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(40),
             ),
             child: Icon(
-              Icons.inbox_outlined,
+              icon,
               size: 40,
-              color: AppColors.primary,
+              color: iconColor,
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            'No Cards Yet',
-            style: AppTextStyles.title2,
+            title,
+            style: AppTextStyles.title2.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Scan physical cards or add virtual cards via QR codes to store them here',
+            subtitle,
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodySecondary,
+            style: AppTextStyles.bodySecondary.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
           ),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.getPrimary(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(

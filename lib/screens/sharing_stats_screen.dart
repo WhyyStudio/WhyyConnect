@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/nearby_share_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
-import '../widgets/custom_button.dart';
 
 class SharingStatsScreen extends StatefulWidget {
   const SharingStatsScreen({super.key});
@@ -114,7 +113,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
             Text(message),
           ],
         ),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.getError(context),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -135,29 +134,31 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.getTextPrimary(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Sharing Stats',
-          style: AppTextStyles.title2,
+          style: AppTextStyles.title2.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         actions: [
           IconButton(
             onPressed: _loadData,
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(Icons.refresh, color: AppColors.getTextPrimary(context)),
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.getPrimary(context)),
               ),
             )
           : SingleChildScrollView(
@@ -173,7 +174,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
                         offset: Offset(0, 30 * (1 - clampedValue)),
                         child: Opacity(
                           opacity: clampedValue,
-                          child: _buildHeader(),
+                          child: _buildHeader(context),
                         ),
                       );
                     },
@@ -187,7 +188,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
                         offset: Offset(0, 40 * (1 - clampedValue)),
                         child: Opacity(
                           opacity: clampedValue,
-                          child: _buildStatsSection(),
+                          child: _buildStatsSection(context),
                         ),
                       );
                     },
@@ -201,7 +202,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
                         offset: Offset(0, 50 * (1 - clampedValue)),
                         child: Opacity(
                           opacity: clampedValue,
-                          child: _buildCardsSection(),
+                          child: _buildCardsSection(context),
                         ),
                       );
                     },
@@ -213,7 +214,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -226,13 +227,13 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.primary,
-                AppColors.primaryLight,
+                AppColors.getPrimary(context),
+                AppColors.getPrimary(context).withValues(alpha: 0.8),
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: AppColors.getPrimary(context).withValues(alpha: 0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -247,53 +248,62 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
         const SizedBox(height: 20),
         Text(
           'Sharing Analytics',
-          style: AppTextStyles.largeTitle,
+          style: AppTextStyles.largeTitle.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           'Track your card sharing activity and connections',
-          style: AppTextStyles.bodySecondary,
+          style: AppTextStyles.bodySecondary.copyWith(
+            color: AppColors.getTextSecondary(context),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Overview',
-          style: AppTextStyles.title3,
+          style: AppTextStyles.title3.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: _buildStatCard(
+                context,
                 'Cards Shared',
                 _stats['shared']?.toString() ?? '0',
                 Icons.share,
-                AppColors.primary,
+                AppColors.getPrimary(context),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
+                context,
                 'Cards Received',
                 _stats['received']?.toString() ?? '0',
                 Icons.download,
-                AppColors.success,
+                AppColors.getSuccess(context),
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
         _buildStatCard(
+          context,
           'Total Shares',
           _stats['totalShares']?.toString() ?? '0',
           Icons.people,
-          AppColors.warning,
+          AppColors.getWarning(context),
           isFullWidth: true,
         ),
       ],
@@ -301,6 +311,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
   }
 
   Widget _buildStatCard(
+    BuildContext context,
     String title,
     String value,
     IconData icon,
@@ -311,10 +322,10 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
       width: isFullWidth ? double.infinity : null,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
         boxShadow: [
@@ -358,7 +369,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
           Text(
             title,
             style: AppTextStyles.footnote.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ],
@@ -366,50 +377,54 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
     );
   }
 
-  Widget _buildCardsSection() {
+  Widget _buildCardsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Recent Activity',
-          style: AppTextStyles.title3,
+          style: AppTextStyles.title3.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         const SizedBox(height: 16),
         if (_sharedCards.isNotEmpty) ...[
-          _buildSectionHeader('Shared Cards', _sharedCards.length),
+          _buildSectionHeader(context, 'Shared Cards', _sharedCards.length),
           const SizedBox(height: 12),
-          ..._sharedCards.take(3).map((card) => _buildSharedCardItem(card)),
+          ..._sharedCards.take(3).map((card) => _buildSharedCardItem(context, card)),
           const SizedBox(height: 24),
         ],
         if (_receivedCards.isNotEmpty) ...[
-          _buildSectionHeader('Received Cards', _receivedCards.length),
+          _buildSectionHeader(context, 'Received Cards', _receivedCards.length),
           const SizedBox(height: 12),
-          ..._receivedCards.take(3).map((card) => _buildReceivedCardItem(card)),
+          ..._receivedCards.take(3).map((card) => _buildReceivedCardItem(context, card)),
         ],
         if (_sharedCards.isEmpty && _receivedCards.isEmpty)
-          _buildEmptyState(),
+          _buildEmptyState(context),
       ],
     );
   }
 
-  Widget _buildSectionHeader(String title, int count) {
+  Widget _buildSectionHeader(BuildContext context, String title, int count) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
-          style: AppTextStyles.headline,
+          style: AppTextStyles.headline.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: AppColors.getPrimary(context).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
             count.toString(),
             style: AppTextStyles.footnote.copyWith(
-              color: AppColors.primary,
+              color: AppColors.getPrimary(context),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -418,7 +433,7 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
     );
   }
 
-  Widget _buildSharedCardItem(Map<String, dynamic> card) {
+  Widget _buildSharedCardItem(BuildContext context, Map<String, dynamic> card) {
     final cardData = card['cardData'] as Map<String, dynamic>;
     final receivedBy = List<String>.from(card['receivedBy'] ?? []);
     final createdAt = (card['createdAt'] as Timestamp).toDate();
@@ -427,10 +442,10 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),
@@ -456,20 +471,22 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
               children: [
                 Text(
                   cardData['name'] ?? 'Unknown',
-                  style: AppTextStyles.headline,
+                  style: AppTextStyles.headline.copyWith(
+                    color: AppColors.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Shared ${receivedBy.length} times',
                   style: AppTextStyles.footnote.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _formatDate(createdAt),
                   style: AppTextStyles.footnote.copyWith(
-                    color: AppColors.textTertiary,
+                    color: AppColors.getTextTertiary(context),
                   ),
                 ),
               ],
@@ -478,13 +495,13 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
+              color: AppColors.getSuccess(context).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               card['pin'] ?? '',
               style: AppTextStyles.footnote.copyWith(
-                color: AppColors.success,
+                color: AppColors.getSuccess(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -494,17 +511,17 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
     );
   }
 
-  Widget _buildReceivedCardItem(Map<String, dynamic> card) {
+  Widget _buildReceivedCardItem(BuildContext context, Map<String, dynamic> card) {
     final receivedAt = (card['receivedAt'] as Timestamp).toDate();
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),
@@ -530,20 +547,22 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
               children: [
                 Text(
                   card['name'] ?? 'Unknown',
-                  style: AppTextStyles.headline,
+                  style: AppTextStyles.headline.copyWith(
+                    color: AppColors.getTextPrimary(context),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'From ${card['sharedByName'] ?? 'Unknown'}',
                   style: AppTextStyles.footnote.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _formatDate(receivedAt),
                   style: AppTextStyles.footnote.copyWith(
-                    color: AppColors.textTertiary,
+                    color: AppColors.getTextTertiary(context),
                   ),
                 ),
               ],
@@ -552,13 +571,13 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.1),
+              color: AppColors.getWarning(context).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               'Received',
               style: AppTextStyles.footnote.copyWith(
-                color: AppColors.warning,
+                color: AppColors.getWarning(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -568,14 +587,14 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),
@@ -584,19 +603,21 @@ class _SharingStatsScreenState extends State<SharingStatsScreen>
           Icon(
             Icons.share,
             size: 64,
-            color: AppColors.textTertiary,
+            color: AppColors.getTextTertiary(context),
           ),
           const SizedBox(height: 16),
           Text(
             'No Sharing Activity Yet',
             style: AppTextStyles.title3.copyWith(
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start sharing your cards or receive cards from others to see activity here',
-            style: AppTextStyles.bodySecondary,
+            style: AppTextStyles.bodySecondary.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
             textAlign: TextAlign.center,
           ),
         ],

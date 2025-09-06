@@ -6,10 +6,12 @@ import 'package:provider/provider.dart';
 import 'wallet_screen.dart';
 import 'my_cards_screen.dart';
 import 'profile_screen.dart';
+import 'sharing_stats_screen.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../utils/theme_provider.dart';
 import '../services/nearby_share_service.dart';
+import '../services/card_storage_service.dart';
 
 class EnhancedHomeScreen extends StatefulWidget {
   const EnhancedHomeScreen({super.key});
@@ -27,8 +29,8 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  final List<Widget> _pages = [
-    const EnhancedHomeContent(),
+  List<Widget> get _pages => [
+    EnhancedHomeContent(onTabChanged: (index) => _onTabTapped(index)),
     const WalletScreen(),
     const MyCardsScreen(),
     const ProfileScreen(),
@@ -185,7 +187,9 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen>
 }
 
 class EnhancedHomeContent extends StatefulWidget {
-  const EnhancedHomeContent({super.key});
+  final Function(int)? onTabChanged;
+  
+  const EnhancedHomeContent({super.key, this.onTabChanged});
 
   @override
   State<EnhancedHomeContent> createState() => _EnhancedHomeContentState();
@@ -285,17 +289,17 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
           });
         }
 
-        // Load cards count
+        // Load cards count from Firestore
         final cardsQuery = await _firestore
             .collection('cards')
             .where('userId', isEqualTo: _currentUser!.uid)
             .get();
         
-        // Load connections count
-        final connectionsQuery = await _firestore
-            .collection('connections')
-            .where('userId', isEqualTo: _currentUser!.uid)
-            .get();
+        // Load local cards count (from SharedPreferences)
+        final localCards = await CardStorageService.getAllCards();
+        
+        // Load received cards count (connections)
+        final receivedCards = await NearbyShareService.getReceivedCards();
 
         // Load sharing statistics
         final sharingStats = await NearbyShareService.getSharingStats();
@@ -312,8 +316,8 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
         final recentShares = await NearbyShareService.getSharedCards();
 
         setState(() {
-          _cardsCount = cardsQuery.docs.length;
-          _connectionsCount = connectionsQuery.docs.length;
+          _cardsCount = cardsQuery.docs.length + localCards.length; // Total cards created
+          _connectionsCount = receivedCards.length; // Cards received (connections)
           _sharedCount = sharingStats['shared'] ?? 0;
           _receivedCount = sharingStats['received'] ?? 0;
           _recentCards = recentCardsQuery.docs.map((doc) {
@@ -397,6 +401,14 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
     } else {
       return 'Good evening';
     }
+  }
+
+  void _navigateToStats() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const SharingStatsScreen(),
+      ),
+    );
   }
 
   @override
@@ -575,8 +587,8 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
             Expanded(
               child: _buildStatCard(
                 _connectionsCount.toString(),
-                'Connections',
-                Icons.people,
+                'Cards Received',
+                Icons.download,
                 AppColors.success,
               ),
             ),
@@ -684,9 +696,7 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
               'Create New Card',
               'Design your digital business card',
               AppColors.getPrimary(context),
-              () {
-                // Navigate to create card screen
-              },
+              () => widget.onTabChanged?.call(2), // Navigate to Cards tab
             ),
             const SizedBox(height: 12),
             _buildActionTile(
@@ -694,9 +704,7 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
               'Scan Card',
               'Scan and save other business cards',
               AppColors.success,
-              () {
-                // Navigate to scan screen
-              },
+              () => widget.onTabChanged?.call(1), // Navigate to Wallet tab
             ),
             const SizedBox(height: 12),
             _buildActionTile(
@@ -704,9 +712,7 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
               'Share Card',
               'Share your card with others',
               AppColors.warning,
-              () {
-                // Navigate to share screen
-              },
+              () => widget.onTabChanged?.call(2), // Navigate to Cards tab
             ),
             const SizedBox(height: 12),
             _buildActionTile(
@@ -714,9 +720,7 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
               'Analytics',
               'View your sharing statistics',
               AppColors.secondary,
-              () {
-                // Navigate to analytics screen
-              },
+              () => _navigateToStats(),
             ),
           ],
         ),

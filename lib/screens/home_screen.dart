@@ -5,11 +5,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'wallet_screen.dart';
 import 'my_cards_screen.dart';
 import 'profile_screen.dart';
+import 'sharing_stats_screen.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
+import '../services/nearby_share_service.dart';
+import '../services/card_storage_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(int)? onTabChanged;
+  
+  const HomeScreen({super.key, this.onTabChanged});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -24,8 +29,8 @@ class _HomeScreenState extends State<HomeScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  final List<Widget> _pages = [
-    const HomeContent(),
+  List<Widget> get _pages => [
+    HomeContent(onTabChanged: widget.onTabChanged),
     const WalletScreen(),
     const MyCardsScreen(),
     const ProfileScreen(),
@@ -182,7 +187,9 @@ class _HomeScreenState extends State<HomeScreen>
 }
 
 class HomeContent extends StatefulWidget {
-  const HomeContent({super.key});
+  final Function(int)? onTabChanged;
+  
+  const HomeContent({super.key, this.onTabChanged});
 
   @override
   State<HomeContent> createState() => _HomeContentState();
@@ -263,19 +270,24 @@ class _HomeContentState extends State<HomeContent>
           });
         }
 
+        // Get cards created by user from Firestore
         final cardsQuery = await _firestore
             .collection('cards')
             .where('userId', isEqualTo: _currentUser!.uid)
             .get();
         
-        final connectionsQuery = await _firestore
-            .collection('connections')
-            .where('userId', isEqualTo: _currentUser!.uid)
-            .get();
+        // Get shared cards count from nearby sharing service
+        final sharedCards = await NearbyShareService.getSharedCards();
+        
+        // Get received cards count from nearby sharing service
+        final receivedCards = await NearbyShareService.getReceivedCards();
+        
+        // Get local cards count (from SharedPreferences)
+        final localCards = await CardStorageService.getAllCards();
 
         setState(() {
-          _cardsCount = cardsQuery.docs.length;
-          _connectionsCount = connectionsQuery.docs.length;
+          _cardsCount = cardsQuery.docs.length + localCards.length; // Total cards created
+          _connectionsCount = receivedCards.length; // Cards received (connections)
           _isLoading = false;
         });
       } catch (e) {
@@ -345,6 +357,14 @@ class _HomeContentState extends State<HomeContent>
     } else {
       return 'Good evening';
     }
+  }
+
+  void _navigateToStats() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const SharingStatsScreen(),
+      ),
+    );
   }
 
   @override
@@ -498,8 +518,8 @@ class _HomeContentState extends State<HomeContent>
             Expanded(
               child: _buildStatCard(
                 _connectionsCount.toString(),
-                'Connections',
-                Icons.people,
+                'Cards Received',
+                Icons.download,
                 AppColors.success,
               ),
             ),
@@ -576,7 +596,7 @@ class _HomeContentState extends State<HomeContent>
               'Create New Card',
               'Design your digital business card',
               AppColors.primary,
-              () {},
+              () => widget.onTabChanged?.call(2), // Navigate to Cards tab
             ),
             const SizedBox(height: 12),
             _buildActionTile(
@@ -584,23 +604,23 @@ class _HomeContentState extends State<HomeContent>
               'Scan Card',
               'Scan and save other business cards',
               AppColors.success,
-              () {},
+              () => widget.onTabChanged?.call(1), // Navigate to Wallet tab
             ),
             const SizedBox(height: 12),
             _buildActionTile(
-              Icons.people_outline,
-              'My Network',
-              'View your professional connections',
+              Icons.share_outlined,
+              'Share Card',
+              'Share your business cards with others',
               AppColors.warning,
-              () {},
+              () => widget.onTabChanged?.call(2), // Navigate to Cards tab
             ),
             const SizedBox(height: 12),
             _buildActionTile(
-              Icons.settings_outlined,
-              'Settings',
-              'Customize your experience',
+              Icons.analytics_outlined,
+              'Analytics',
+              'View your sharing statistics',
               AppColors.secondary,
-              () {},
+              () => _navigateToStats(),
             ),
           ],
         ),

@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can only access their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // User's cards collection (subcollection structure)
+      match /cards/{cardId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's received cards collection (for nearby sharing)
+      match /received_cards/{cardId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // User's virtual cards collection (for QR scanning)
+      match /virtual_cards/{cardId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Top-level cards collection (for home screen queries)
+    match /cards/{cardId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Top-level connections collection (for home screen queries)
+    match /connections/{connectionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Card sharing collection - for nearby sharing functionality
+    match /card_sharing/{pin} {
+      // Allow authenticated users to create sharing sessions
+      allow create: if request.auth != null 
+        && request.auth.uid == resource.data.sharedBy
+        && resource.data.keys().hasAll(['pin', 'cardData', 'sharedBy', 'createdAt', 'expiresAt', 'isActive']);
+      
+      // Allow authenticated users to read sharing sessions (for receiving cards)
+      allow read: if request.auth != null;
+      
+      // Allow the creator to update their sharing sessions (for tracking receipts)
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.sharedBy
+        && request.resource.data.keys().hasAll(['pin', 'cardData', 'sharedBy', 'createdAt', 'expiresAt', 'isActive']);
+      
+      // Allow the creator to delete their sharing sessions
+      allow delete: if request.auth != null && request.auth.uid == resource.data.sharedBy;
+    }
+    
+    // Public cards collection (if needed for public sharing)
+    match /public_cards/{cardId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == resource.data.ownerId;
+    }
+    
+    // Analytics collection (for sharing statistics)
+    match /analytics/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

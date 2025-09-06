@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/card_storage_service.dart';
+import '../utils/app_colors.dart';
+import '../utils/app_text_styles.dart';
 
 class CardDetailsPopup extends StatefulWidget {
   final Map<String, dynamic> card;
@@ -90,9 +92,9 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
       position: _slideAnimation,
       child: Container(
         height: MediaQuery.of(context).size.height * 0.9,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: AppColors.getBackground(context),
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
@@ -105,7 +107,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: AppColors.getBorder(context),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -119,12 +121,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFCC61D).withValues(alpha: 0.1),
+                      color: AppColors.getPrimary(context).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.business,
-                      color: const Color(0xFFFCC61D),
+                      color: AppColors.getPrimary(context),
                       size: 24,
                     ),
                   ),
@@ -135,19 +137,15 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1C1C1E),
+                          style: AppTextStyles.title2.copyWith(
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                         if (company.isNotEmpty)
                           Text(
                             company,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF8E8E93),
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.getTextSecondary(context),
                             ),
                           ),
                       ],
@@ -157,9 +155,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                     children: [
                       IconButton(
                         onPressed: () => _showDeleteConfirmation(),
-                        icon: const Icon(Icons.delete_outline),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: AppColors.getError(context),
+                        ),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                          backgroundColor: AppColors.getError(context).withValues(alpha: 0.1),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -168,9 +169,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                       const SizedBox(width: 8),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
+                        icon: Icon(
+                          Icons.close,
+                          color: AppColors.getTextSecondary(context),
+                        ),
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.grey.shade100,
+                          backgroundColor: AppColors.getSurface(context),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -193,7 +197,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFCC61D).withValues(alpha: 0.1),
+                        color: AppColors.getPrimary(context).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -202,15 +206,13 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                           Icon(
                             Icons.flip,
                             size: 16,
-                            color: const Color(0xFFFCC61D),
+                            color: AppColors.getPrimary(context),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Tap to flip card',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFFFCC61D),
+                            style: AppTextStyles.footnote.copyWith(
+                              color: AppColors.getPrimary(context),
                             ),
                           ),
                         ],
@@ -270,8 +272,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               child: Container(
                 margin: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: AppColors.getSurface(context),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.getBorder(context),
+                    width: 0.5,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,10 +286,8 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                       padding: const EdgeInsets.all(20),
                       child: Text(
                         'Contact Information',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1C1C1E),
+                        style: AppTextStyles.title3.copyWith(
+                          color: AppColors.getTextPrimary(context),
                         ),
                       ),
                     ),
@@ -359,8 +363,8 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFFCC61D).withValues(alpha: 0.1),
-            const Color(0xFFFCC61D).withValues(alpha: 0.05),
+            AppColors.getPrimary(context).withValues(alpha: 0.1),
+            AppColors.getPrimary(context).withValues(alpha: 0.05),
           ],
         ),
       ),
@@ -370,23 +374,20 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
           Icon(
             side == 'Front' ? Icons.business : Icons.contact_page,
             size: 48,
-            color: const Color(0xFFFCC61D),
+            color: AppColors.getPrimary(context),
           ),
           const SizedBox(height: 12),
           Text(
             'Card $side',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1C1C1E),
+            style: AppTextStyles.title3.copyWith(
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Image not available',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
+            style: AppTextStyles.bodySecondary.copyWith(
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ],
@@ -404,13 +405,13 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFFFCC61D).withValues(alpha: 0.1),
+              color: AppColors.getPrimary(context).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 16,
-              color: const Color(0xFFFCC61D),
+              color: AppColors.getPrimary(context),
             ),
           ),
           const SizedBox(width: 12),
@@ -420,19 +421,15 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade600,
+                  style: AppTextStyles.caption1.copyWith(
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1C1C1E),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
               ],
@@ -453,13 +450,13 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFFFCC61D).withValues(alpha: 0.1),
+              color: AppColors.getPrimary(context).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               size: 16,
-              color: const Color(0xFFFCC61D),
+              color: AppColors.getPrimary(context),
             ),
           ),
           const SizedBox(width: 12),
@@ -469,19 +466,15 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade600,
+                  style: AppTextStyles.caption1.copyWith(
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1C1C1E),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
               ],
@@ -493,11 +486,11 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFCC61D),
+                color: AppColors.getPrimary(context),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFCC61D).withValues(alpha: 0.3),
+                    color: AppColors.getPrimary(context).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -505,10 +498,9 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               ),
               child: Text(
                 actionText,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.caption1.copyWith(
                   color: Colors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -581,7 +573,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: const Color(0xFFFF3B30),
+        backgroundColor: AppColors.getError(context),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -609,23 +601,21 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                color: AppColors.getError(context).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.warning_amber_rounded,
-                color: Color(0xFFFF3B30),
+                color: AppColors.getError(context),
                 size: 20,
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Delete Card',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1C1C1E),
+                style: AppTextStyles.title2.copyWith(
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
             ),
@@ -637,37 +627,36 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
           children: [
             Text(
               'Are you sure you want to delete this card?',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF1C1C1E),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: AppColors.getSurface(context),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.getBorder(context),
+                  width: 0.5,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1C1C1E),
+                    style: AppTextStyles.headline.copyWith(
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   if (company.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       company,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                      style: AppTextStyles.footnote.copyWith(
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                   ],
@@ -678,10 +667,10 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                color: AppColors.getError(context).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFF3B30).withValues(alpha: 0.2),
+                  color: AppColors.getError(context).withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -690,16 +679,15 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                   Icon(
                     Icons.info_outline,
                     size: 16,
-                    color: const Color(0xFFFF3B30),
+                    color: AppColors.getError(context),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'This action cannot be undone. The card and its images will be permanently deleted.',
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: AppTextStyles.caption1.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFFFF3B30),
+                        color: AppColors.getError(context),
                       ),
                     ),
                   ),
@@ -716,10 +704,8 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             ),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
+              style: AppTextStyles.headline.copyWith(
+                color: AppColors.getTextSecondary(context),
               ),
             ),
           ),
@@ -731,7 +717,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               _deleteCard();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF3B30),
+              backgroundColor: AppColors.getError(context),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -739,11 +725,10 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               ),
               elevation: 0,
             ),
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+              style: AppTextStyles.headline.copyWith(
+                color: Colors.white,
               ),
             ),
           ),
@@ -799,7 +784,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                 Text('${cardType == 'virtual' ? 'Virtual' : 'Physical'} card deleted successfully'),
               ],
             ),
-            backgroundColor: const Color(0xFF34C759),
+            backgroundColor: AppColors.getSuccess(context),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -824,7 +809,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                 Text('Failed to delete card'),
               ],
             ),
-            backgroundColor: const Color(0xFFFF3B30),
+            backgroundColor: AppColors.getError(context),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_button.dart';
 import '../screens/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'sharing_stats_screen.dart';
+import '../utils/app_colors.dart';
+import '../utils/app_text_styles.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -29,7 +32,6 @@ class _ProfileScreenState extends State<ProfileScreen>
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   Map<String, dynamic>? _userData;
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -94,22 +96,11 @@ class _ProfileScreenState extends State<ProfileScreen>
         if (doc.exists) {
           setState(() {
             _userData = doc.data();
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _isLoading = false;
           });
         }
       } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
+        // Handle error silently
       }
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -186,91 +177,94 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 20),
-          AnimatedBuilder(
-            animation: _headerAnimation,
-            builder: (context, child) {
-              final clampedValue = _headerAnimation.value.clamp(0.0, 1.0);
-              return Transform.translate(
-                offset: Offset(0, 30 * (1 - clampedValue)),
-                child: Opacity(
-                  opacity: clampedValue,
-                  child: _buildHeader(),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          AnimatedBuilder(
-            animation: _profileAnimation,
-            builder: (context, child) {
-              final clampedValue = _profileAnimation.value.clamp(0.0, 1.0);
-              return Transform.translate(
-                offset: Offset(0, 40 * (1 - clampedValue)),
-                child: Opacity(
-                  opacity: clampedValue,
-                  child: _buildProfileCard(),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          AnimatedBuilder(
-            animation: _menuAnimation,
-            builder: (context, child) {
-              final clampedValue = _menuAnimation.value.clamp(0.0, 1.0);
-              return Transform.translate(
-                offset: Offset(0, 50 * (1 - clampedValue)),
-                child: Opacity(
-                  opacity: clampedValue,
-                  child: _buildMenuItems(),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 100),
-        ],
+    return Container(
+      color: AppColors.getBackground(context),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            AnimatedBuilder(
+              animation: _headerAnimation,
+              builder: (context, child) {
+                final clampedValue = _headerAnimation.value.clamp(0.0, 1.0);
+                return Transform.translate(
+                  offset: Offset(0, 30 * (1 - clampedValue)),
+                  child: Opacity(
+                    opacity: clampedValue,
+                    child: _buildHeader(context),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+            AnimatedBuilder(
+              animation: _profileAnimation,
+              builder: (context, child) {
+                final clampedValue = _profileAnimation.value.clamp(0.0, 1.0);
+                return Transform.translate(
+                  offset: Offset(0, 40 * (1 - clampedValue)),
+                  child: Opacity(
+                    opacity: clampedValue,
+                    child: _buildProfileCard(context),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+            AnimatedBuilder(
+              animation: _menuAnimation,
+              builder: (context, child) {
+                final clampedValue = _menuAnimation.value.clamp(0.0, 1.0);
+                return Transform.translate(
+                  offset: Offset(0, 50 * (1 - clampedValue)),
+                  child: Opacity(
+                    opacity: clampedValue,
+                    child: _buildMenuItems(context),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Profile',
-          style: TextStyle(
+          style: AppTextStyles.largeTitle.copyWith(
             fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1C1C1E),
-            letterSpacing: -0.5,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         Text(
           'Manage your account and preferences',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF8E8E93),
+          style: AppTextStyles.bodySecondary.copyWith(
+            color: AppColors.getTextSecondary(context),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildProfileCard() {
+  Widget _buildProfileCard(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 0.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -316,27 +310,23 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 20),
           Text(
             _getUserDisplayName(),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1C1C1E),
+            style: AppTextStyles.title2.copyWith(
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             _getUserEmail(),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF8E8E93),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.getTextSecondary(context),
             ),
           ),
           const SizedBox(height: 16),
-          _buildInfoRow(Icons.business, _getUserCompany()),
+          _buildInfoRow(context, Icons.business, _getUserCompany()),
           const SizedBox(height: 8),
-          _buildInfoRow(Icons.work, _getUserPosition()),
+          _buildInfoRow(context, Icons.work, _getUserPosition()),
           const SizedBox(height: 8),
-          _buildInfoRow(Icons.phone, _getUserPhone()),
+          _buildInfoRow(context, Icons.phone, _getUserPhone()),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -372,23 +362,23 @@ class _ProfileScreenState extends State<ProfileScreen>
           Row(
             children: [
               Expanded(
-                child: _buildProfileStat('Cards', '12', Icons.credit_card),
+                child: _buildProfileStat(context, 'Cards', '12', Icons.credit_card),
               ),
               Container(
                 width: 1,
                 height: 40,
-                color: const Color(0xFFE5E5EA),
+                color: AppColors.getBorder(context),
               ),
               Expanded(
-                child: _buildProfileStat('Views', '1.2K', Icons.visibility),
+                child: _buildProfileStat(context, 'Views', '1.2K', Icons.visibility),
               ),
               Container(
                 width: 1,
                 height: 40,
-                color: const Color(0xFFE5E5EA),
+                color: AppColors.getBorder(context),
               ),
               Expanded(
-                child: _buildProfileStat('Shares', '89', Icons.share),
+                child: _buildProfileStat(context, 'Shares', '89', Icons.share),
               ),
             ],
           ),
@@ -397,22 +387,20 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow(BuildContext context, IconData icon, String text) {
     return Row(
       children: [
         Icon(
           icon,
           size: 16,
-          color: const Color(0xFF8E8E93),
+          color: AppColors.getTextSecondary(context),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF8E8E93),
+            style: AppTextStyles.footnote.copyWith(
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ),
@@ -420,7 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildProfileStat(String label, String value, IconData icon) {
+  Widget _buildProfileStat(BuildContext context, String label, String value, IconData icon) {
     return Column(
       children: [
         Row(
@@ -429,15 +417,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             Icon(
               icon,
               size: 16,
-              color: const Color(0xFFFCC61D),
+              color: AppColors.getPrimary(context),
             ),
             const SizedBox(width: 4),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1C1C1E),
+              style: AppTextStyles.title3.copyWith(
+                color: AppColors.getTextPrimary(context),
               ),
             ),
           ],
@@ -445,26 +431,22 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF8E8E93),
+          style: AppTextStyles.footnote.copyWith(
+            color: AppColors.getTextSecondary(context),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildMenuItems() {
+  Widget _buildMenuItems(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Settings',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1C1C1E),
+          style: AppTextStyles.title3.copyWith(
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 16),
@@ -473,6 +455,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: Column(
             children: [
               _buildMenuItem(
+                context,
                 Icons.person_outline,
                 'Edit Profile',
                 'Update your personal information',
@@ -486,6 +469,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 },
               ),
               _buildMenuItem(
+                context,
                 Icons.analytics,
                 'Sharing Stats',
                 'View your card sharing activity',
@@ -499,13 +483,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                 },
               ),
               _buildMenuItem(
+                context,
                 Icons.favorite,
                 'Donate',
                 'Support our development',
                 const Color(0xFFFF3B30),
-                () {},
+                () => _openDonateLink(),
               ),
               _buildMenuItem(
+                context,
                 Icons.help_outline,
                 'Help & Support',
                 'Get help and contact support',
@@ -513,6 +499,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 () {},
               ),
               _buildMenuItem(
+                context,
                 Icons.info_outline,
                 'About',
                 'App version and information',
@@ -535,6 +522,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildMenuItem(
+    BuildContext context,
     IconData icon,
     String title,
     String subtitle,
@@ -544,8 +532,12 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 0.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -583,19 +575,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1C1C1E),
+                        style: AppTextStyles.headline.copyWith(
+                          color: AppColors.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF8E8E93),
+                        style: AppTextStyles.footnote.copyWith(
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                     ],
@@ -603,7 +591,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: const Color(0xFFC7C7CC),
+                  color: AppColors.getTextTertiary(context),
                   size: 20,
                 ),
               ],
@@ -630,6 +618,33 @@ class _ProfileScreenState extends State<ProfileScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Sign out failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openDonateLink() async {
+    try {
+      final Uri donateUri = Uri.parse('https://buymeacoffee.com/whyystudio');
+      if (await canLaunchUrl(donateUri)) {
+        await launchUrl(donateUri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Could not open donation link'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening donation link: $e'),
             backgroundColor: Colors.red,
           ),
         );

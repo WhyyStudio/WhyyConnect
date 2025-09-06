@@ -5,8 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import '../services/card_storage_service.dart';
-import '../services/simple_sharing_service.dart';
 import '../services/nearby_share_service.dart';
+import '../utils/app_colors.dart';
+import '../utils/app_text_styles.dart';
 import 'nearby_share_screen.dart';
 
 class MyCardsScreen extends StatefulWidget {
@@ -79,7 +80,7 @@ class _MyCardsScreenState extends State<MyCardsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -95,7 +96,7 @@ class _MyCardsScreenState extends State<MyCardsScreen>
                     offset: Offset(0, 30 * (1 - clampedValue)),
                     child: Opacity(
                       opacity: clampedValue,
-                      child: _buildHeader(),
+                      child: _buildHeader(context),
                     ),
                   );
                 },
@@ -109,7 +110,7 @@ class _MyCardsScreenState extends State<MyCardsScreen>
                     offset: Offset(0, 40 * (1 - clampedValue)),
                     child: Opacity(
                       opacity: clampedValue,
-                      child: _buildContent(),
+                      child: _buildContent(context),
                     ),
                   );
                 },
@@ -122,37 +123,35 @@ class _MyCardsScreenState extends State<MyCardsScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'My Cards',
-          style: TextStyle(
+          style: AppTextStyles.largeTitle.copyWith(
             fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1C1C1E),
-            letterSpacing: -0.5,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         Text(
           'Create and manage your digital cards',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF8E8E93),
+          style: AppTextStyles.bodySecondary.copyWith(
+            color: AppColors.getTextSecondary(context),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Column(
       children: [
         _buildAddCardButton(context),
+        const SizedBox(height: 16),
+        // _buildLinkedInConnectButton(context), // LinkedIn connect disabled
         const SizedBox(height: 32),
-        _buildMyCardsList(),
+        _buildMyCardsList(context),
       ],
     );
   }
@@ -240,7 +239,93 @@ class _MyCardsScreenState extends State<MyCardsScreen>
     );
   }
 
-  Widget _buildMyCardsList() {
+  // LinkedIn connect button - disabled
+  /*
+  Widget _buildLinkedInConnectButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 100,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF0077B5), // LinkedIn blue
+            const Color(0xFF005885), // Darker LinkedIn blue
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0077B5).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _connectLinkedIn(context),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(
+                    Icons.work,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Connect LinkedIn',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Import your LinkedIn profile',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  */
+
+  Widget _buildMyCardsList(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('users')
@@ -249,14 +334,18 @@ class _MyCardsScreenState extends State<MyCardsScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.getPrimary(context)),
+            ),
+          );
         }
 
         if (snapshot.hasError) {
           return Center(
             child: Text(
               'Error loading cards: ${snapshot.error}',
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: AppColors.getError(context)),
             ),
           );
         }
@@ -264,7 +353,7 @@ class _MyCardsScreenState extends State<MyCardsScreen>
         final cards = snapshot.data?.docs ?? [];
 
         if (cards.isEmpty) {
-          return _buildEmptyState();
+          return _buildEmptyState(context);
         }
 
         return Column(
@@ -272,27 +361,29 @@ class _MyCardsScreenState extends State<MyCardsScreen>
           children: [
             Text(
               'Your Cards (${cards.length})',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1C1C1E),
+              style: AppTextStyles.title3.copyWith(
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 16),
-            ...cards.map((card) => _buildCardItem(card)),
+            ...cards.map((card) => _buildCardItem(context, card)),
           ],
         );
       },
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.1),
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 0.5,
+        ),
       ),
       child: Column(
         children: [
@@ -300,31 +391,31 @@ class _MyCardsScreenState extends State<MyCardsScreen>
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: AppColors.getSurface(context),
               borderRadius: BorderRadius.circular(60),
+              border: Border.all(
+                color: AppColors.getBorder(context),
+                width: 1,
+              ),
             ),
             child: Icon(
               Icons.credit_card_outlined,
               size: 60,
-              color: Colors.grey.withValues(alpha: 0.5),
+              color: AppColors.getTextTertiary(context),
             ),
           ),
           const SizedBox(height: 24),
           Text(
             'No cards yet',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1C1C1E),
+            style: AppTextStyles.title2.copyWith(
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 12),
           Text(
             'Create your first digital card to get started',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF8E8E93),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.getTextSecondary(context),
             ),
             textAlign: TextAlign.center,
           ),
@@ -333,7 +424,7 @@ class _MyCardsScreenState extends State<MyCardsScreen>
     );
   }
 
-Widget _buildCardItem(DocumentSnapshot card) {
+Widget _buildCardItem(BuildContext context, DocumentSnapshot card) {
   try {
     final data = card.data() as Map<String, dynamic>;
     final cardType = data['cardType']?.toString() ?? 'Business';
@@ -813,6 +904,92 @@ Widget _buildCardItem(DocumentSnapshot card) {
       ),
     );
   }
+
+  // LinkedIn connect method - disabled
+  /*
+  void _connectLinkedIn(BuildContext context) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0077B5)),
+          ),
+        ),
+      );
+
+      // Authenticate with LinkedIn
+      final linkedInData = await LinkedInService().authenticateAndFetchData(context);
+      
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      if (linkedInData != null) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('LinkedIn card created: ${linkedInData.firstName} ${linkedInData.lastName}'),
+              ],
+            ),
+            backgroundColor: const Color(0xFF0077B5),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Failed to connect LinkedIn'),
+              ],
+            ),
+            backgroundColor: Color(0xFFFF3B30),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+            margin: EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      Navigator.of(context).pop();
+      
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 8),
+              Text('LinkedIn connection error: $e'),
+            ],
+          ),
+          backgroundColor: const Color(0xFFFF3B30),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
+  }
+  */
 }
 
 class AddCardBottomSheet extends StatefulWidget {
@@ -886,13 +1063,13 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppColors.getBackground(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -901,13 +1078,13 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardTypeSelector(),
+                    _buildCardTypeSelector(context),
                     const SizedBox(height: 24),
-                    _buildCardColorSelector(),
+                    _buildCardColorSelector(context),
                     const SizedBox(height: 24),
-                    _buildCardFields(),
+                    _buildCardFields(context),
                     const SizedBox(height: 32),
-                    _buildSaveButton(),
+                    _buildSaveButton(context),
                   ],
                 ),
               ),
@@ -918,12 +1095,16 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.1),
+        color: AppColors.getSurface(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 0.5,
+        ),
       ),
       child: Row(
         children: [
@@ -931,60 +1112,70 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.3),
+              color: AppColors.getTextTertiary(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const Spacer(),
           Text(
             'Create New Card',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1C1C1E),
+            style: AppTextStyles.title3.copyWith(
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const Spacer(),
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close),
+            icon: Icon(
+              Icons.close,
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCardTypeSelector() {
+  Widget _buildCardTypeSelector(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Card Type',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1C1C1E),
+          style: AppTextStyles.headline.copyWith(
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: AppColors.getSurface(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.2),
+              color: AppColors.getBorder(context),
             ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedCardType,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.getTextPrimary(context),
+              ),
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+              ),
               items: _cardTypes.map((type) {
                 return DropdownMenuItem(
                   value: type,
-                  child: Text(type),
+                  child: Text(
+                    type,
+                    style: TextStyle(
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                  ),
                 );
               }).toList(),
               onChanged: (value) {
@@ -999,33 +1190,37 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
     );
   }
 
-  Widget _buildCardColorSelector() {
+  Widget _buildCardColorSelector(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Card Color',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1C1C1E),
+          style: AppTextStyles.headline.copyWith(
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: AppColors.getSurface(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.2),
+              color: AppColors.getBorder(context),
             ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedCardColor,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.getTextPrimary(context),
+              ),
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+              ),
               items: _cardColors.map((color) {
                 return DropdownMenuItem(
                   value: color,
@@ -1040,7 +1235,12 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(color[0].toUpperCase() + color.substring(1).toLowerCase()),
+                      Text(
+                        color[0].toUpperCase() + color.substring(1).toLowerCase(),
+                        style: TextStyle(
+                          color: AppColors.getTextPrimary(context),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -1110,23 +1310,24 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
     }
   }
 
-  Widget _buildCardFields() {
+  Widget _buildCardFields(BuildContext context) {
     switch (_selectedCardType) {
       case 'Business':
-        return _buildBusinessCardFields();
+        return _buildBusinessCardFields(context);
       case 'Social':
-        return _buildSocialCardFields();
+        return _buildSocialCardFields(context);
       case 'Email':
-        return _buildEmailCardFields();
+        return _buildEmailCardFields(context);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildBusinessCardFields() {
+  Widget _buildBusinessCardFields(BuildContext context) {
     return Column(
       children: [
         _buildTextField(
+          context: context,
           controller: _businessNameController,
           label: 'Business Name *',
           hint: 'Enter business name',
@@ -1139,6 +1340,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _nameController,
           label: 'Name *',
           hint: 'Enter your name',
@@ -1151,6 +1353,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _positionController,
           label: 'Position *',
           hint: 'Enter your position',
@@ -1163,6 +1366,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _mobileController,
           label: 'Mobile Number *',
           hint: 'Enter mobile number',
@@ -1176,6 +1380,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _hotlineController,
           label: 'Hotline (Optional)',
           hint: 'Enter hotline number',
@@ -1183,6 +1388,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _addressController,
           label: 'Address *',
           hint: 'Enter business address',
@@ -1196,6 +1402,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _websiteController,
           label: 'Website (Optional)',
           hint: 'Enter website URL',
@@ -1205,10 +1412,11 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
     );
   }
 
-  Widget _buildSocialCardFields() {
+  Widget _buildSocialCardFields(BuildContext context) {
     return Column(
       children: [
         _buildTextField(
+          context: context,
           controller: _socialNameController,
           label: 'Name *',
           hint: 'Enter your name',
@@ -1221,6 +1429,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _companyWebsiteController,
           label: 'Company Website *',
           hint: 'Enter company website',
@@ -1234,36 +1443,42 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _instagramController,
           label: 'Instagram',
           hint: 'Enter Instagram handle',
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _linkedinController,
           label: 'LinkedIn',
           hint: 'Enter LinkedIn profile',
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _facebookController,
           label: 'Facebook',
           hint: 'Enter Facebook profile',
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _xController,
           label: 'X (Twitter)',
           hint: 'Enter X handle',
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _behanceController,
           label: 'Behance',
           hint: 'Enter Behance profile',
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _pinterestController,
           label: 'Pinterest',
           hint: 'Enter Pinterest profile',
@@ -1272,10 +1487,11 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
     );
   }
 
-  Widget _buildEmailCardFields() {
+  Widget _buildEmailCardFields(BuildContext context) {
     return Column(
       children: [
         _buildTextField(
+          context: context,
           controller: _emailNameController,
           label: 'Name *',
           hint: 'Enter your name',
@@ -1288,6 +1504,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _emailController,
           label: 'Email *',
           hint: 'Enter your email',
@@ -1304,6 +1521,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _emailCompanyController,
           label: 'Company Name *',
           hint: 'Enter company name',
@@ -1316,6 +1534,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           controller: _emailPositionController,
           label: 'Position *',
           hint: 'Enter your position',
@@ -1331,6 +1550,7 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required String hint,
@@ -1343,10 +1563,8 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1C1C1E),
+          style: AppTextStyles.footnote.copyWith(
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 8),
@@ -1355,13 +1573,34 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
+          style: TextStyle(
+            color: AppColors.getTextPrimary(context),
+          ),
           decoration: InputDecoration(
             hintText: hint,
+            hintStyle: TextStyle(
+              color: AppColors.getTextSecondary(context),
+            ),
             filled: true,
-            fillColor: Colors.grey.withValues(alpha: 0.1),
+            fillColor: AppColors.getSurface(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: AppColors.getBorder(context),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppColors.getBorder(context),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppColors.getPrimary(context),
+                width: 2,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -1373,24 +1612,23 @@ class _AddCardBottomSheetState extends State<AddCardBottomSheet> {
     );
   }
 
-  Widget _buildSaveButton() {
+  Widget _buildSaveButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: _saveCard,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFCC61D),
-          foregroundColor: const Color(0xFF1C1C1E),
+          backgroundColor: AppColors.getPrimary(context),
+          foregroundColor: AppColors.getTextPrimary(context),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
+        child: Text(
           'Save Card',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+          style: AppTextStyles.headline.copyWith(
+            color: AppColors.getTextPrimary(context),
           ),
         ),
       ),
@@ -1542,9 +1780,9 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
     
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppColors.getBackground(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -1572,8 +1810,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.05),
+        color: AppColors.getSurface(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 0.5,
+        ),
       ),
       child: Row(
         children: [
@@ -1581,23 +1823,25 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.3),
+              color: AppColors.getBorder(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const Spacer(),
           Text(
             'Card Details',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1C1C1E),
+            style: AppTextStyles.title2.copyWith(
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const Spacer(),
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close, size: 24),
+            icon: Icon(
+              Icons.close,
+              size: 24,
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
         ],
       ),
@@ -1795,10 +2039,8 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
       children: [
         Text(
           'Card Information',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1C1C1E),
+          style: AppTextStyles.title2.copyWith(
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 20),
@@ -1871,10 +2113,11 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.05),
+            color: AppColors.getSurface(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: AppColors.getBorder(context),
+              width: 0.5,
             ),
           ),
           child: Column(
@@ -1887,7 +2130,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF007AFF),
+                      color: AppColors.getPrimary(context),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -1898,19 +2141,16 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                       children: [
                         Text(
                           detail['label']!,
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: AppTextStyles.footnote.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF8E8E93),
+                            color: AppColors.getTextSecondary(context),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           detail['value']!,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF1C1C1E),
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                       ],
@@ -1936,14 +2176,14 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             _buildDetailActionButton(
               icon: Icons.phone,
               label: 'Call',
-              color: const Color(0xFF34C759),
+              color: AppColors.getSuccess(context),
               onTap: () => _makePhoneCall(value),
             ),
             const SizedBox(width: 8),
             _buildDetailActionButton(
               icon: Icons.message,
               label: 'SMS',
-              color: const Color(0xFF007AFF),
+              color: AppColors.getPrimary(context),
               onTap: () => _sendSMS(value),
             ),
           ],
@@ -1954,7 +2194,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             _buildDetailActionButton(
               icon: Icons.language,
               label: 'Open Website',
-              color: const Color(0xFF007AFF),
+              color: AppColors.getPrimary(context),
               onTap: () => _openWebsite(value),
             ),
           ],
@@ -1965,14 +2205,14 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             _buildDetailActionButton(
               icon: Icons.map,
               label: 'Open in Maps',
-              color: const Color(0xFF34C759),
+              color: AppColors.getSuccess(context),
               onTap: () => _openInMaps(value),
             ),
             const SizedBox(width: 8),
             _buildDetailActionButton(
               icon: Icons.directions,
               label: 'Get Directions',
-              color: const Color(0xFFFF9500),
+              color: AppColors.getWarning(context),
               onTap: () => _getDirections(value),
             ),
           ],
@@ -2049,7 +2289,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             _buildDetailActionButton(
               icon: Icons.email,
               label: 'Send Email',
-              color: const Color(0xFF007AFF),
+              color: AppColors.getPrimary(context),
               onTap: () => _sendEmail(value),
             ),
           ],
@@ -2112,10 +2352,8 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
       children: [
         Text(
           'Share Card',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1C1C1E),
+          style: AppTextStyles.title2.copyWith(
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 20),
@@ -2125,7 +2363,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               child: _buildShareButton(
                 icon: Icons.qr_code,
                 label: 'QR Code',
-                color: const Color(0xFF007AFF),
+                color: AppColors.getPrimary(context),
                 onTap: () => _shareWithQR(),
               ),
             ),
@@ -2134,7 +2372,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               child: _buildShareButton(
                 icon: Icons.share,
                 label: 'Nearby',
-                color: const Color(0xFF34C759),
+                color: AppColors.getSuccess(context),
                 onTap: () => _shareWithNFC(),
               ),
             ),
@@ -2143,7 +2381,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               child: _buildShareButton(
                 icon: Icons.link,
                 label: 'Link',
-                color: const Color(0xFFFF9500),
+                color: AppColors.getWarning(context),
                 onTap: () => _shareWithLink(),
               ),
             ),
@@ -2231,7 +2469,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
-    final color = isDestructive ? const Color(0xFFFF3B30) : const Color(0xFF007AFF);
+    final color = isDestructive ? AppColors.getError(context) : AppColors.getPrimary(context);
     
     return Material(
       color: Colors.transparent,
@@ -2242,10 +2480,11 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.05),
+            color: AppColors.getSurface(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: AppColors.getBorder(context),
+              width: 0.5,
             ),
           ),
           child: Row(
@@ -2258,16 +2497,14 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               const SizedBox(width: 16),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                style: AppTextStyles.headline.copyWith(
                   color: color,
                 ),
               ),
               const Spacer(),
               Icon(
                 Icons.chevron_right,
-                color: Colors.grey.withValues(alpha: 0.5),
+                color: AppColors.getTextSecondary(context),
                 size: 20,
               ),
             ],
@@ -2368,7 +2605,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.getBackground(context),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -2380,12 +2617,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF007AFF).withValues(alpha: 0.1),
+                      color: AppColors.getPrimary(context).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.qr_code,
-                      color: Color(0xFF007AFF),
+                      color: AppColors.getPrimary(context),
                       size: 20,
                     ),
                   ),
@@ -2393,16 +2630,17 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                   Expanded(
                     child: Text(
                       'Share Card QR Code',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1C1C1E),
+                      style: AppTextStyles.title2.copyWith(
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
+                    icon: Icon(
+                      Icons.close,
+                      color: AppColors.getTextPrimary(context),
+                    ),
                   ),
                 ],
               ),
@@ -2410,24 +2648,27 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.05),
+                  color: AppColors.getSurface(context),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.getBorder(context),
+                    width: 0.5,
+                  ),
                 ),
                 child: QrImageView(
                   data: qrData,
                   version: QrVersions.auto,
                   size: 200,
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF1C1C1E),
+                  backgroundColor: AppColors.getBackground(context),
+                  foregroundColor: AppColors.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Scan this QR code with another device to add this card to your wallet',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: const Color(0xFF8E8E93),
+                style: AppTextStyles.bodySecondary.copyWith(
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
               const SizedBox(height: 20),
@@ -2444,10 +2685,8 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                       ),
                       child: Text(
                         'Close',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF8E8E93),
+                        style: AppTextStyles.headline.copyWith(
+                          color: AppColors.getTextSecondary(context),
                         ),
                       ),
                     ),
@@ -2457,18 +2696,17 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
                     child: ElevatedButton(
                       onPressed: () => _saveQRCode(qrData),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF007AFF),
+                        backgroundColor: AppColors.getPrimary(context),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Save QR',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                        style: AppTextStyles.headline.copyWith(
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -2484,23 +2722,23 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
 
   void _saveQRCode(String qrData) {
     // TODO: Implement QR code saving to gallery
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text('QR Code saved to gallery'),
-          ],
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('QR Code saved to gallery'),
+            ],
+          ),
+          backgroundColor: AppColors.getSuccess(context),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
         ),
-        backgroundColor: Color(0xFF34C759),
-        behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+      );
     Navigator.pop(context);
   }
 
@@ -2553,7 +2791,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               Text('Error: $e'),
             ],
           ),
-          backgroundColor: const Color(0xFFFF3B30),
+          backgroundColor: AppColors.getError(context),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -2566,9 +2804,9 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
 
   void _shareWithLink() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Link sharing coming soon!'),
-        backgroundColor: Color(0xFFFF9500),
+      SnackBar(
+        content: const Text('Link sharing coming soon!'),
+        backgroundColor: AppColors.getWarning(context),
       ),
     );
   }
@@ -2577,9 +2815,9 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
     Navigator.pop(context);
     // TODO: Implement edit functionality
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit functionality coming soon!'),
-        backgroundColor: Colors.blue,
+      SnackBar(
+        content: const Text('Edit functionality coming soon!'),
+        backgroundColor: AppColors.getPrimary(context),
       ),
     );
   }
@@ -2638,12 +2876,28 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Card'),
-        content: const Text('Are you sure you want to delete this card? This action cannot be undone.'),
+        backgroundColor: AppColors.getBackground(context),
+        title: Text(
+          'Delete Card',
+          style: AppTextStyles.title2.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this card? This action cannot be undone.',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.headline.copyWith(
+                color: AppColors.getTextSecondary(context),
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -2651,16 +2905,21 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
               Navigator.pop(context);
               // TODO: Implement delete functionality
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Delete functionality coming soon!'),
-                  backgroundColor: Colors.red,
+                SnackBar(
+                  content: const Text('Delete functionality coming soon!'),
+                  backgroundColor: AppColors.getError(context),
                 ),
               );
             },
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFFF3B30),
+              foregroundColor: AppColors.getError(context),
             ),
-            child: const Text('Delete'),
+            child: Text(
+              'Delete',
+              style: AppTextStyles.headline.copyWith(
+                color: AppColors.getError(context),
+              ),
+            ),
           ),
         ],
       ),
@@ -2833,7 +3092,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             Text(message),
           ],
         ),
-        backgroundColor: const Color(0xFFFF3B30),
+        backgroundColor: AppColors.getError(context),
         behavior: SnackBarBehavior.floating,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),

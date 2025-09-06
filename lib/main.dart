@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/enhanced_home_screen.dart';
+import 'utils/theme_provider.dart';
+import 'utils/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +22,12 @@ void main() async {
     print('Firebase initialization failed: $e');
   }
   
-  runApp(const WhyyConnectApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const WhyyConnectApp(),
+    ),
+  );
 }
 
 class WhyyConnectApp extends StatelessWidget {
@@ -27,62 +35,30 @@ class WhyyConnectApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        SystemChrome.setSystemUIOverlayStyle(
+          SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: themeProvider.isDarkMode ? Brightness.light : Brightness.dark,
+            systemNavigationBarColor: themeProvider.isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+            systemNavigationBarIconBrightness: themeProvider.isDarkMode ? Brightness.light : Brightness.dark,
+          ),
+        );
 
-    return MaterialApp(
-      title: 'Whyy Connect - Business Cards',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        textTheme: GoogleFonts.interTextTheme(),
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: Color(0xFF1C1C1E)),
-          titleTextStyle: TextStyle(
-            color: Color(0xFF1C1C1E),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+        return MaterialApp(
+          title: 'Whyy Connect - Business Cards',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme.copyWith(
+            textTheme: GoogleFonts.interTextTheme(AppTheme.lightTheme.textTheme),
           ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+          darkTheme: AppTheme.darkTheme.copyWith(
+            textTheme: GoogleFonts.interTextTheme(AppTheme.darkTheme.textTheme),
           ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFFF2F2F7),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF007AFF), width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFFF3B30), width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-      ),
-      home: const AuthWrapper(),
+          themeMode: themeProvider.themeMode,
+          home: const AuthWrapper(),
+        );
+      },
     );
   }
 }
@@ -101,7 +77,7 @@ class AuthWrapper extends StatelessWidget {
           }
           
           if (snapshot.hasData && snapshot.data != null) {
-            return const HomeScreen();
+            return const EnhancedHomeScreen();
           }
           
           return const SplashScreen();

@@ -2,13 +2,10 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'card_scanner_screen.dart';
 import '../services/card_storage_service.dart';
-import '../services/simple_sharing_service.dart';
 import '../widgets/card_details_popup.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
@@ -29,7 +26,6 @@ class _WalletScreenState extends State<WalletScreen>
   
   late Animation<double> _headerAnimation;
   late Animation<double> _buttonsAnimation;
-  late Animation<double> _cardsAnimation;
   
   List<Map<String, dynamic>> _scannedCards = [];
   bool _isLoading = true;
@@ -66,13 +62,6 @@ class _WalletScreenState extends State<WalletScreen>
       curve: Curves.easeOutCubic,
     ));
 
-    _cardsAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _cardsController,
-      curve: Curves.easeOutCubic,
-    ));
 
     _loadScannedCards();
     _startAnimations();
@@ -81,6 +70,7 @@ class _WalletScreenState extends State<WalletScreen>
   Future<void> _loadScannedCards() async {
     try {
       final allCards = await CardStorageService.getAllCards();
+      // final linkedInCards = await _loadLinkedInCards(); // LinkedIn cards loading disabled
       if (mounted) {
         setState(() {
           _scannedCards = allCards;
@@ -96,6 +86,32 @@ class _WalletScreenState extends State<WalletScreen>
       print('Error loading cards: $e');
     }
   }
+
+  // LinkedIn cards loading method - disabled
+  /*
+  Future<List<Map<String, dynamic>>> _loadLinkedInCards() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return [];
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('cards')
+          .where('isLinkedInCard', isEqualTo: true)
+          .get();
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      print('Error loading LinkedIn cards: $e');
+      return [];
+    }
+  }
+  */
 
   void _startAnimations() async {
     await Future.delayed(const Duration(milliseconds: 100));
@@ -122,67 +138,60 @@ class _WalletScreenState extends State<WalletScreen>
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                AnimatedBuilder(
-                  animation: _headerAnimation,
-                  builder: (context, child) {
-                    final clampedValue = _headerAnimation.value.clamp(0.0, 1.0);
-                    return Transform.translate(
-                      offset: Offset(0, 30 * (1 - clampedValue)),
-                      child: Opacity(
-                        opacity: clampedValue,
-                        child: _buildHeader(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 32),
-                AnimatedBuilder(
-                  animation: _buttonsAnimation,
-                  builder: (context, child) {
-                    final clampedValue = _buttonsAnimation.value.clamp(0.0, 1.0);
-                    return Transform.translate(
-                      offset: Offset(0, 40 * (1 - clampedValue)),
-                      child: Opacity(
-                        opacity: clampedValue,
-                        child: _buildActionButtons(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 32),
-                AnimatedBuilder(
-                  animation: _cardsController,
-                  builder: (context, child) {
-                    final clampedValue = _cardsController.value.clamp(0.0, 1.0);
-                    return Transform.translate(
-                      offset: Offset(0, 40 * (1 - clampedValue)),
-                      child: Opacity(
-                        opacity: clampedValue,
-                        child: _buildScannedCards(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 40),
-              ],
+    return Container(
+      color: AppColors.getBackground(context),
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  AnimatedBuilder(
+                    animation: _headerAnimation,
+                    builder: (context, child) {
+                      final clampedValue = _headerAnimation.value.clamp(0.0, 1.0);
+                      return Transform.translate(
+                        offset: Offset(0, 30 * (1 - clampedValue)),
+                        child: Opacity(
+                          opacity: clampedValue,
+                          child: _buildHeader(context),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  AnimatedBuilder(
+                    animation: _buttonsAnimation,
+                    builder: (context, child) {
+                      final clampedValue = _buttonsAnimation.value.clamp(0.0, 1.0);
+                      return Transform.translate(
+                        offset: Offset(0, 40 * (1 - clampedValue)),
+                        child: Opacity(
+                          opacity: clampedValue,
+                          child: _buildActionButtons(context),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  _buildScannedCards(context),
+                  const SizedBox(height: 32),
+                  // _buildLinkedInCards(context), // LinkedIn cards section disabled
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -190,24 +199,29 @@ class _WalletScreenState extends State<WalletScreen>
           'Wallet',
           style: AppTextStyles.largeTitle.copyWith(
             fontSize: 32,
+            color: AppColors.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           'Store and manage business cards shared with you',
-          style: AppTextStyles.bodySecondary,
+          style: AppTextStyles.bodySecondary.copyWith(
+            color: AppColors.getTextSecondary(context),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Quick Actions',
-          style: AppTextStyles.title3,
+          style: AppTextStyles.title3.copyWith(
+            color: AppColors.getTextPrimary(context),
+          ),
         ),
         const SizedBox(height: 16),
                  SizedBox(
@@ -356,7 +370,397 @@ class _WalletScreenState extends State<WalletScreen>
     );
   }
 
-  Widget _buildScannedCards() {
+  // LinkedIn cards section - disabled
+  /*
+  Widget _buildLinkedInCards(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'LinkedIn Cards',
+              style: AppTextStyles.title3.copyWith(
+                color: AppColors.getTextPrimary(context),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0077B5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${_linkedInCards.length}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _showLinkedInQRScanner(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.getPrimary(context),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.qr_code_scanner,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Scan QR',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (_linkedInCards.isEmpty)
+          _buildLinkedInEmptyState(context)
+        else
+          _buildLinkedInCardsList(context),
+      ],
+    );
+  }
+  */
+
+  // LinkedIn empty state - disabled
+  /*
+  Widget _buildLinkedInEmptyState(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0077B5).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(40),
+            ),
+            child: const Icon(
+              Icons.work,
+              size: 40,
+              color: Color(0xFF0077B5),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'No LinkedIn Cards Yet',
+            style: AppTextStyles.headline.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Scan LinkedIn QR codes to store professional cards',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySecondary.copyWith(
+              color: AppColors.getTextSecondary(context),
+            ),
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: () => _showLinkedInQRScanner(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0077B5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.qr_code_scanner,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Scan LinkedIn QR Code',
+                    style: AppTextStyles.headline.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  */
+
+  // LinkedIn cards list - disabled
+  /*
+  Widget _buildLinkedInCardsList(BuildContext context) {
+    return SizedBox(
+      height: 220, // Fixed height for the LinkedIn cards list
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _linkedInCards.length,
+        itemBuilder: (context, index) {
+          final card = _linkedInCards[index];
+          return Container(
+            width: 280, // Fixed width for each card
+            margin: EdgeInsets.only(
+              right: index < _linkedInCards.length - 1 ? 16 : 0,
+            ),
+            child: _buildLinkedInCardItem(context, card),
+          );
+        },
+      ),
+    );
+  }
+  */
+
+  // LinkedIn card item - disabled
+  /*
+  Widget _buildLinkedInCardItem(BuildContext context, Map<String, dynamic> card) {
+    final name = card['name'] ?? 'Unknown';
+    final company = card['company'] ?? '';
+    final headline = card['headline'] ?? '';
+    final industry = card['industry'] ?? '';
+
+    return GestureDetector(
+      onTap: () => _showLinkedInCardDetails(context, card),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        height: 200,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0077B5), Color(0xFF005885), Color(0xFF004066)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0077B5).withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background circles
+            Positioned(
+              top: -20,
+              right: -20,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -30,
+              left: -30,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.03),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            // Main content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header with LinkedIn branding
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.work,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'LINKEDIN',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => _showLinkedInShareOptions(context, card),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.share,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Card details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        if (headline.isNotEmpty) ...[
+                          Text(
+                            headline,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.95),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                        Text(
+                          company.isNotEmpty ? company : industry,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // LinkedIn profile link
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.link,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'View Profile',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  */
+
+  Widget _buildScannedCards(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -365,7 +769,9 @@ class _WalletScreenState extends State<WalletScreen>
           children: [
             Text(
               'All Cards',
-              style: AppTextStyles.title3,
+              style: AppTextStyles.title3.copyWith(
+                color: AppColors.getTextPrimary(context),
+              ),
             ),
             Row(
               children: [
@@ -459,11 +865,19 @@ class _WalletScreenState extends State<WalletScreen>
   }
 
   Widget _buildScannedCardsList() {
-    return Column(
-      children: [
-        ..._scannedCards.map((card) => _buildScannedCardItem(card)).toList(),
-        const SizedBox(height: 20), // Extra padding at bottom
-      ],
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _scannedCards.length,
+      itemBuilder: (context, index) {
+        final card = _scannedCards[index];
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: index < _scannedCards.length - 1 ? 16 : 20,
+          ),
+          child: _buildScannedCardItem(card),
+        );
+      },
     );
   }
 
@@ -474,7 +888,6 @@ class _WalletScreenState extends State<WalletScreen>
     final email = extractedData['email'] ?? '';
     final phone = extractedData['phone'] ?? '';
     final position = extractedData['position'] ?? '';
-    final scannedDate = card['createdAt'] ?? DateTime.now().toString();
     final cardType = card['cardType'] ?? 'physical';
     final isVirtual = cardType == 'virtual';
     final cardColor = card['cardColor'] ?? 'gold';
@@ -585,45 +998,54 @@ class _WalletScreenState extends State<WalletScreen>
                   ),
                   const Spacer(),
                   // Card details
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (position.isNotEmpty) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Text(
-                          position,
+                          name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        if (position.isNotEmpty) ...[
+                          Text(
+                            position,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.95),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                        Text(
+                          company.isNotEmpty ? company : 'Unknown Company',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.95),
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
                       ],
-                      Text(
-                        company.isNotEmpty ? company : 'Unknown Company',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Contact info
                   if (email.isNotEmpty || phone.isNotEmpty) ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -635,17 +1057,19 @@ class _WalletScreenState extends State<WalletScreen>
                               children: [
                                 Icon(
                                   Icons.email_outlined,
-                                  size: 16,
+                                  size: 14,
                                   color: Colors.white.withValues(alpha: 0.8),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
                                     email,
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 12,
                                       color: Colors.white.withValues(alpha: 0.9),
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -656,32 +1080,34 @@ class _WalletScreenState extends State<WalletScreen>
                               children: [
                                 Icon(
                                   Icons.phone_outlined,
-                                  size: 16,
+                                  size: 14,
                                   color: Colors.white.withValues(alpha: 0.8),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
                                     phone,
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 12,
                                       color: Colors.white.withValues(alpha: 0.9),
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 GestureDetector(
                                   onTap: () => _makePhoneCall(phone),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(6),
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: const Text(
                                       'Call',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                       ),
@@ -756,14 +1182,6 @@ class _WalletScreenState extends State<WalletScreen>
     }
   }
 
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.day}/${date.month}/${date.year}';
-    } catch (e) {
-      return 'Unknown date';
-    }
-  }
 
   void _showCardDetails(Map<String, dynamic> card) {
     showModalBottomSheet(
@@ -1239,6 +1657,143 @@ class _WalletScreenState extends State<WalletScreen>
       _showErrorSnackBar('Error receiving card: $e');
     }
   }
+
+  // LinkedIn-specific methods - disabled
+  /*
+  void _showLinkedInQRScanner(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LinkedInQRScannerScreen(
+          onLinkedInQRScanned: (qrData) {
+            _processLinkedInQRData(qrData);
+          },
+        ),
+      ),
+    );
+  }
+  */
+
+  /*
+  void _processLinkedInQRData(String qrData) async {
+    try {
+      final cardData = jsonDecode(qrData) as Map<String, dynamic>;
+      
+      // Check if it's a LinkedIn card
+      if (cardData['cardType'] == 'LinkedIn' || cardData['source'] == 'LinkedIn') {
+        // Create a LinkedIn card entry
+        final cardEntry = {
+          'cardType': 'LinkedIn',
+          'cardColor': cardData['cardColor'] ?? 'diamond',
+          'name': cardData['name'] ?? 'Unknown',
+          'firstName': cardData['firstName'] ?? '',
+          'lastName': cardData['lastName'] ?? '',
+          'email': cardData['email'] ?? '',
+          'profilePicture': cardData['linkedInData']?['profilePicture'] ?? '',
+          'headline': cardData['linkedInData']?['headline'] ?? '',
+          'industry': cardData['linkedInData']?['industry'] ?? '',
+          'location': cardData['address'] ?? '',
+          'summary': cardData['linkedInData']?['summary'] ?? '',
+          'currentPosition': cardData['position'] ?? '',
+          'company': cardData['company'] ?? '',
+          'linkedInProfile': cardData['social']?['linkedin'] ?? '',
+          'experience': cardData['linkedInData']?['experience'] ?? [],
+          'education': cardData['linkedInData']?['education'] ?? [],
+          'skills': cardData['linkedInData']?['skills'] ?? [],
+          'linkedInId': cardData['cardId']?.split('_')[1] ?? '',
+          'source': 'LinkedIn QR',
+          'isLinkedInCard': true,
+          'createdAt': DateTime.now().toIso8601String(),
+        };
+        
+        // Save LinkedIn card to Firestore
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('cards')
+              .add(cardEntry);
+
+          // Also save to top-level cards collection
+          await FirebaseFirestore.instance
+              .collection('cards')
+              .add({
+                ...cardEntry,
+                'userId': user.uid,
+              });
+        }
+        
+        // Reload cards to show the new one
+        await _loadScannedCards();
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text('LinkedIn card added: ${cardData['name']}'),
+                ],
+              ),
+              backgroundColor: const Color(0xFF0077B5),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        }
+      } else {
+        // Handle regular QR codes
+        _processQRData(qrData);
+      }
+      
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('Invalid LinkedIn QR code: $e'),
+              ],
+            ),
+            backgroundColor: const Color(0xFFFF3B30),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    }
+  }
+  */
+
+  /*
+  void _showLinkedInCardDetails(BuildContext context, Map<String, dynamic> card) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => LinkedInCardDetailsPopup(card: card),
+    );
+  }
+
+  void _showLinkedInShareOptions(BuildContext context, Map<String, dynamic> card) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => LinkedInShareOptionsBottomSheet(card: card),
+    );
+  }
+  */
 }
 
 class QRScannerScreen extends StatefulWidget {
@@ -1436,5 +1991,640 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     // Process the QR data and return to previous screen
     widget.onQRCodeScanned(qrData);
     Navigator.pop(context);
+  }
+}
+
+// LinkedIn QR Scanner Screen
+class LinkedInQRScannerScreen extends StatefulWidget {
+  final Function(String) onLinkedInQRScanned;
+  
+  const LinkedInQRScannerScreen({super.key, required this.onLinkedInQRScanned});
+
+  @override
+  State<LinkedInQRScannerScreen> createState() => _LinkedInQRScannerScreenState();
+}
+
+class _LinkedInQRScannerScreenState extends State<LinkedInQRScannerScreen> {
+  MobileScannerController cameraController = MobileScannerController();
+  bool _isScanning = true;
+
+  @override
+  void dispose() {
+    cameraController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Scan LinkedIn QR Code',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(_isScanning ? Icons.flash_off : Icons.flash_on),
+            onPressed: () {
+              cameraController.toggleTorch();
+              setState(() {
+                _isScanning = !_isScanning;
+              });
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: cameraController,
+            onDetect: (capture) {
+              final List<Barcode> barcodes = capture.barcodes;
+              for (final barcode in barcodes) {
+                if (barcode.rawValue != null) {
+                  _onLinkedInQRCodeDetected(barcode.rawValue!);
+                  break;
+                }
+              }
+            },
+          ),
+          _buildLinkedInOverlay(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinkedInOverlay() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.5),
+      ),
+      child: Center(
+        child: Container(
+          width: 250,
+          height: 250,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: const Color(0xFF0077B5),
+              width: 3,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Stack(
+            children: [
+              // Corner indicators
+              Positioned(
+                top: 0,
+                left: 0,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0077B5),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0077B5),
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0077B5),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0077B5),
+                    borderRadius: BorderRadius.only(
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+              // Center text
+              const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.work,
+                      color: Color(0xFF0077B5),
+                      size: 40,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Position LinkedIn QR here',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onLinkedInQRCodeDetected(String qrData) {
+    // Stop scanning to prevent multiple scans
+    cameraController.stop();
+    
+    // Show success feedback
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Text('LinkedIn QR Code detected!'),
+          ],
+        ),
+        backgroundColor: Color(0xFF0077B5),
+        duration: Duration(seconds: 1),
+      ),
+    );
+    
+    // Process the QR data and return to previous screen
+    widget.onLinkedInQRScanned(qrData);
+    Navigator.pop(context);
+  }
+}
+
+// LinkedIn Card Details Popup
+class LinkedInCardDetailsPopup extends StatelessWidget {
+  final Map<String, dynamic> card;
+  
+  const LinkedInCardDetailsPopup({super.key, required this.card});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  _buildLinkedInCardPreview(context),
+                  const SizedBox(height: 32),
+                  _buildLinkedInDetails(context),
+                  const SizedBox(height: 32),
+                  _buildLinkedInActions(context),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.05),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const Spacer(),
+          Text(
+            'LinkedIn Card Details',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close, size: 24),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinkedInCardPreview(BuildContext context) {
+    final name = card['name'] ?? 'Unknown';
+    final company = card['company'] ?? '';
+    final headline = card['headline'] ?? '';
+
+    return Container(
+      width: double.infinity,
+      height: 200,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0077B5), Color(0xFF005885), Color(0xFF004066)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0077B5).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(
+                    Icons.work,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'LINKEDIN CARD',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (headline.isNotEmpty) ...[
+              Text(
+                headline,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.95),
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
+            Text(
+              company,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLinkedInDetails(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Professional Information',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.getTextPrimary(context),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _buildDetailItem(context, 'Name', card['name'] ?? ''),
+        _buildDetailItem(context, 'Headline', card['headline'] ?? ''),
+        _buildDetailItem(context, 'Company', card['company'] ?? ''),
+        _buildDetailItem(context, 'Industry', card['industry'] ?? ''),
+        _buildDetailItem(context, 'Location', card['location'] ?? ''),
+        _buildDetailItem(context, 'Email', card['email'] ?? ''),
+        if (card['summary'] != null && card['summary'].toString().isNotEmpty)
+          _buildDetailItem(context, 'Summary', card['summary']),
+      ],
+    );
+  }
+
+  Widget _buildDetailItem(BuildContext context, String label, String value) {
+    if (value.isEmpty) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.getBorder(context),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.getTextSecondary(context),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinkedInActions(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _openLinkedInProfile(context),
+            icon: const Icon(Icons.work),
+            label: const Text('Open LinkedIn Profile'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0077B5),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _shareLinkedInCard(context),
+            icon: const Icon(Icons.share),
+            label: const Text('Share LinkedIn Card'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF0077B5),
+              side: const BorderSide(color: Color(0xFF0077B5)),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openLinkedInProfile(BuildContext context) {
+    final linkedInProfile = card['linkedInProfile'] ?? '';
+    if (linkedInProfile.isNotEmpty) {
+      // TODO: Implement LinkedIn profile opening
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Opening LinkedIn profile...'),
+          backgroundColor: Color(0xFF0077B5),
+        ),
+      );
+    }
+  }
+
+  void _shareLinkedInCard(BuildContext context) {
+    // TODO: Implement LinkedIn card sharing
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sharing LinkedIn card...'),
+        backgroundColor: Color(0xFF0077B5),
+      ),
+    );
+  }
+}
+
+// LinkedIn Share Options Bottom Sheet
+class LinkedInShareOptionsBottomSheet extends StatelessWidget {
+  final Map<String, dynamic> card;
+  
+  const LinkedInShareOptionsBottomSheet({super.key, required this.card});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Share LinkedIn Card',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildShareOption(
+                  context,
+                  icon: Icons.qr_code,
+                  label: 'QR Code',
+                  color: const Color(0xFF007AFF),
+                  onTap: () => _shareAsQR(context),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildShareOption(
+                  context,
+                  icon: Icons.share,
+                  label: 'Nearby',
+                  color: const Color(0xFF34C759),
+                  onTap: () => _shareNearby(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareOption(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _shareAsQR(BuildContext context) {
+    Navigator.pop(context);
+    // TODO: Implement QR code sharing for LinkedIn card
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Generating LinkedIn QR code...'),
+        backgroundColor: Color(0xFF007AFF),
+      ),
+    );
+  }
+
+  void _shareNearby(BuildContext context) {
+    Navigator.pop(context);
+    // TODO: Implement nearby sharing for LinkedIn card
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sharing LinkedIn card nearby...'),
+        backgroundColor: Color(0xFF34C759),
+      ),
+    );
   }
 }

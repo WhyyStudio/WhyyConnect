@@ -24,7 +24,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
     with TickerProviderStateMixin {
   late AnimationController _headerController;
   late AnimationController _contentController;
-  late AnimationController _pinController;
+  late AnimationController _pinAnimationController;
   
   late Animation<double> _headerAnimation;
   late Animation<double> _contentAnimation;
@@ -47,7 +47,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _pinController = AnimationController(
+    _pinAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
@@ -72,7 +72,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _pinController,
+      parent: _pinAnimationController,
       curve: Curves.elasticOut,
     ));
 
@@ -94,7 +94,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
     }
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
-      _pinController.forward();
+      _pinAnimationController.forward();
     }
   }
 
@@ -102,7 +102,7 @@ class _NearbyShareScreenState extends State<NearbyShareScreen>
   void dispose() {
     _headerController.dispose();
     _contentController.dispose();
-    _pinController.dispose();
+    _pinAnimationController.dispose();
     _pinController.dispose();
     super.dispose();
   }

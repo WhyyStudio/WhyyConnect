@@ -12,7 +12,7 @@ import '../services/simple_sharing_service.dart';
 import '../widgets/card_details_popup.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
-import 'tap_to_share_screen.dart';
+import 'nearby_share_screen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -259,9 +259,9 @@ class _WalletScreenState extends State<WalletScreen>
         SizedBox(
           height: 120,
           child: _buildActionButton(
-            icon: Icons.nfc,
-            title: 'Reserve NFC Card',
-            subtitle: 'Contactless digital cards',
+            icon: Icons.share,
+            title: 'Receive Card',
+            subtitle: 'Enter PIN to receive cards',
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -270,7 +270,7 @@ class _WalletScreenState extends State<WalletScreen>
             isFullWidth: true,
             onTap: () async {
               HapticFeedback.lightImpact();
-              await _receiveNFCCard();
+              await _receiveCardByPIN();
             },
           ),
         ),
@@ -1178,13 +1178,13 @@ class _WalletScreenState extends State<WalletScreen>
     );
   }
 
-  Future<void> _receiveNFCCard() async {
+  Future<void> _receiveCardByPIN() async {
     try {
-      // Navigate to tap-to-receive screen
+      // Navigate to nearby share screen for receiving
       final receivedCard = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => TapToShareScreen(
+          builder: (context) => const NearbyShareScreen(
             cardData: {}, // Empty for receiving
             isSharing: false,
           ),
@@ -1206,9 +1206,12 @@ class _WalletScreenState extends State<WalletScreen>
           },
           'socialData': receivedCard['social'] ?? {},
           'cardType': receivedCard['cardType'] ?? 'Business',
-          'source': 'Device Share',
+          'source': 'Nearby Share',
           'qrCardId': receivedCard['cardId'],
           'cardColor': receivedCard['cardColor'] ?? 'gold',
+          'sharedBy': receivedCard['sharedBy'],
+          'sharedByName': receivedCard['sharedByName'],
+          'sharingPIN': receivedCard['sharingPIN'],
         };
 
         await CardStorageService.saveVirtualCard(cardEntry);

@@ -6,7 +6,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import '../services/card_storage_service.dart';
 import '../services/simple_sharing_service.dart';
-import 'tap_to_share_screen.dart';
+import '../services/nearby_share_service.dart';
+import 'nearby_share_screen.dart';
 
 class MyCardsScreen extends StatefulWidget {
   const MyCardsScreen({super.key});
@@ -763,12 +764,16 @@ Widget _buildCardItem(DocumentSnapshot card) {
 
   void _deleteCard(String cardId) async {
     try {
+      // Delete from Firestore
       await _firestore
           .collection('users')
           .doc(_currentUser?.uid)
           .collection('cards')
           .doc(cardId)
           .delete();
+      
+      // Delete from nearby shared cards
+      await NearbyShareService.deleteSharedCard(cardId);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2127,8 +2132,8 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
             const SizedBox(width: 16),
             Expanded(
               child: _buildShareButton(
-                icon: Icons.nfc,
-                label: 'NFC',
+                icon: Icons.share,
+                label: 'Nearby',
                 color: const Color(0xFF34C759),
                 onTap: () => _shareWithNFC(),
               ),
@@ -2504,7 +2509,7 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
       final data = widget.card.data() as Map<String, dynamic>;
       final cardId = widget.card.id;
       
-      // Create card data for NFC sharing
+      // Create card data for nearby sharing
       final cardData = {
         'cardId': cardId,
         'cardType': data['cardType'] ?? 'Business',
@@ -2527,12 +2532,12 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
 
-      // Navigate to tap-to-share screen
+      // Navigate to nearby share screen
       Navigator.pop(context); // Close the current dialog
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => TapToShareScreen(
+          builder: (context) => NearbyShareScreen(
             cardData: cardData,
             isSharing: true,
           ),
@@ -2619,6 +2624,9 @@ class _CardDetailsPopupState extends State<CardDetailsPopup>
         'cardType': updatedCardData['cardType'],
         'updatedAt': DateTime.now().toIso8601String(),
       });
+
+      // Update nearby shared cards
+      await NearbyShareService.updateSharedCard(cardId, updatedCardData);
 
       print('Virtual cards synchronized for card: $cardId');
     } catch (e) {

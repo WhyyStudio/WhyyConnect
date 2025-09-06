@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../widgets/custom_button.dart';
 import '../screens/login_screen.dart';
+import 'edit_profile_screen.dart';
+import 'sharing_stats_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -475,21 +477,26 @@ class _ProfileScreenState extends State<ProfileScreen>
                 'Edit Profile',
                 'Update your personal information',
                 const Color(0xFF007AFF),
-                () {},
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen(),
+                    ),
+                  );
+                },
               ),
               _buildMenuItem(
-                Icons.notifications_outlined,
-                'Notifications',
-                'Manage your notification preferences',
+                Icons.analytics,
+                'Sharing Stats',
+                'View your card sharing activity',
                 const Color(0xFF34C759),
-                () {},
-              ),
-              _buildMenuItem(
-                Icons.security,
-                'Privacy & Security',
-                'Control your privacy settings',
-                const Color(0xFFFF9500),
-                () {},
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const SharingStatsScreen(),
+                    ),
+                  );
+                },
               ),
               _buildMenuItem(
                 Icons.favorite,

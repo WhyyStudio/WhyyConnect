@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         bottom: false,
         child: FadeTransition(
@@ -117,10 +117,10 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.getSurface(context),
           border: Border(
             top: BorderSide(
-              color: AppColors.border,
+              color: AppColors.getBorder(context),
               width: 0.5,
             ),
           ),
@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen>
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primary : Colors.transparent,
+          color: isActive ? AppColors.getPrimary(context) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -164,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen>
               child: Icon(
                 isActive ? activeIcon : icon,
                 key: ValueKey(isActive),
-                color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
+                color: isActive ? AppColors.getTextPrimary(context) : AppColors.getTextSecondary(context),
                 size: 24,
               ),
             ),
@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
+                color: isActive ? AppColors.getTextPrimary(context) : AppColors.getTextSecondary(context),
                 letterSpacing: -0.2,
               ),
               child: Text(label),
@@ -442,14 +442,11 @@ class _HomeContentState extends State<HomeContent>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primaryLight,
-                  ],
+                  colors: AppColors.getPrimaryGradient(context),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: AppColors.getPrimary(context).withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),
@@ -511,7 +508,7 @@ class _HomeContentState extends State<HomeContent>
                 _cardsCount.toString(),
                 'Cards Created',
                 Icons.credit_card,
-                AppColors.primary,
+                AppColors.getPrimary(context),
               ),
             ),
             const SizedBox(width: 12),
@@ -520,7 +517,7 @@ class _HomeContentState extends State<HomeContent>
                 _connectionsCount.toString(),
                 'Cards Received',
                 Icons.download,
-                AppColors.success,
+                AppColors.getSuccess(context),
               ),
             ),
           ],
@@ -533,10 +530,10 @@ class _HomeContentState extends State<HomeContent>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),
@@ -595,7 +592,7 @@ class _HomeContentState extends State<HomeContent>
               Icons.add_circle_outline,
               'Create New Card',
               'Design your digital business card',
-              AppColors.primary,
+              AppColors.getPrimary(context),
               () => widget.onTabChanged?.call(2), // Navigate to Cards tab
             ),
             const SizedBox(height: 12),
@@ -631,10 +628,10 @@ class _HomeContentState extends State<HomeContent>
   Widget _buildActionTile(IconData icon, String title, String subtitle, Color color, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),

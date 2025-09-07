@@ -187,7 +187,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 Text('Profile updated successfully'),
               ],
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.getSuccess(context),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -223,12 +223,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.getTextPrimary(context)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -237,21 +237,25 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ),
         actions: [
           if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.getPrimary(context)),
                 ),
               ),
             ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.getPrimary(context)),
+              ),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -291,8 +295,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       text: _isSaving ? 'Saving...' : 'Save Changes',
                       onPressed: _isSaving ? null : _saveProfile,
                       isLoading: _isSaving,
-                      backgroundColor: AppColors.primary,
-                      textColor: AppColors.textPrimary,
+                      backgroundColor: AppColors.getPrimary(context),
+                      textColor: Colors.white,
                     ),
                     const SizedBox(height: 100),
                   ],
@@ -315,14 +319,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary,
-                  AppColors.primaryLight,
-                ],
+                colors: AppColors.getPrimaryGradient(context),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
+                  color: AppColors.getPrimary(context).withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -409,17 +410,17 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: AppColors.getPrimary(context).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.2),
+              color: AppColors.getPrimary(context).withValues(alpha: 0.2),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.info_outline,
-                color: AppColors.primary,
+                color: AppColors.getPrimary(context),
                 size: 20,
               ),
               const SizedBox(width: 12),

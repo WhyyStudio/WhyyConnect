@@ -1020,17 +1020,17 @@ class _WalletScreenState extends State<WalletScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.border,
+          color: AppColors.getBorder(context),
           width: 0.5,
         ),
       ),
       child: Column(
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.getPrimary(context)),
           ),
           const SizedBox(height: 20),
           Text(
@@ -1369,7 +1369,7 @@ class _WalletScreenState extends State<WalletScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.getBackground(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -1511,7 +1511,7 @@ class _WalletScreenState extends State<WalletScreen>
                 Text('${cardType == 'virtual' ? 'Virtual' : 'Physical'} card deleted successfully'),
               ],
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.getSuccess(context),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

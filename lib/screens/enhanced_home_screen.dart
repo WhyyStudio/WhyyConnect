@@ -589,7 +589,7 @@ class _EnhancedHomeContentState extends State<EnhancedHomeContent>
                 _connectionsCount.toString(),
                 'Cards Received',
                 Icons.download,
-                AppColors.success,
+                AppColors.getSuccess(context),
               ),
             ),
           ],
